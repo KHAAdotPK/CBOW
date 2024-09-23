@@ -9,9 +9,9 @@ In this project, I've started implementing the `CBOW` model from scratch in **C+
 1. **Forward Propagation**:
 The forward propagation function computes the hidden layer and the predicted probabilities for the context words given a center word. The implementation follows the architecture of a neural network with a single hidden layer.
 #### Key Steps:
-1. **Input Layer**: Represents the center word as a one-hot encoded vector.
-2. **Hidden Layer**: Projects the one-hot encoded vector to a continuous embedding using weights `W1`.
-3. **Output Layer**: Predicts the probability distribution over all words in the vocabulary using the softmax function on the output of the hidden layer.
+. **Input Layer**: Represents the center word as a one-hot encoded vector.
+. **Hidden Layer**: Projects the one-hot encoded vector to a continuous embedding using weights `W1`.
+. **Output Layer**: Predicts the probability distribution over all words in the vocabulary using the softmax function on the output of the hidden layer.
 #### Implementation Summary:
 - Forward propagation is completed with matrix operations for the hidden and output layers.
 - The result is a prediction of the probability distribution over context words for a given center word.
