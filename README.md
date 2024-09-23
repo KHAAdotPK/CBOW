@@ -73,7 +73,8 @@ The next steps in this project include:
     ./RUN.cmd
     ```
 
-#### Parameters
+#### Example of Using the implementation in your code
+##### Parameters
 - **Epoch**: Number of times the model will iterate over the entire training data.
 - **Learning Rate**: Controls how much the weights are adjusted during training.
 - **Verbose**: Enable to print detailed progress during training.
