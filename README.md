@@ -73,7 +73,7 @@ The next steps in this project include:
     ./RUN.cmd
     ```
 
-## Parameters
+#### Parameters
 - **Epoch**: Number of times the model will iterate over the entire training data.
 - **Learning Rate**: Controls how much the weights are adjusted during training.
 - **Verbose**: Enable to print detailed progress during training.
@@ -90,7 +90,6 @@ int main() {
     PAIRS pairs(vocab);
 
     // Initialize weights W1, W2
-
     Collective<double> W1 = Numcy::Random::randn(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
     Collective<double> W2 = Numcy::Random::randn(DIMENSIONS{vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, NULL, NULL});
 
