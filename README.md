@@ -3,7 +3,7 @@ Welcome to the Continuous Bag of Words (`CBOW`) implementation in C++! This proj
 ### Project Overview
 #### What is `CBOW`?
 `CBOW` is one of the two architectures proposed by **Mikolov et al**. for creating word embeddings, the other being [Skip-Gram](https://github.com/KHAAdotPK/skip-gram.git). In `CBOW`, the model predicts the target word (center word) based on the context words (surrounding words within a fixed window size). This approach captures the semantics of words by analyzing their context in large corpora, resulting in dense vector representations that encode meaningful relationships between words.
-### Implementation Details
+## Implementation Details
 In this project, I've started implementing the `CBOW` model from scratch in **C++**. The goal is to provide an efficient, flexible, and customizable `CBOW` implementation suitable for various **NLP** tasks. Here's a brief overview of what has been accomplished so far:
 
 ### Forward Propagation:
@@ -16,14 +16,14 @@ The forward propagation function computes the hidden layer and the predicted pro
 - Forward propagation is completed with matrix operations for the hidden and output layers.
 - The result is a prediction of the probability distribution over context words for a given center word.
 
-2. **Backward Propagation**:
+### Backward Propagation:
 The backward propagation function computes the gradients of the weights based on the loss between the predicted probabilities and the actual context words (represented as one-hot vectors). These gradients are used to update the weight matrices `W1` and `W2`.
 #### Key Steps:
-1. **Error Calculation**: The error is calculated as the difference between the predicted probability distribution (`y_pred`) and the one-hot encoded target distribution (`y_true`).
-2. **Gradient Computation**:
-   - `grad_W2`: The gradient of the output layer weights.
-   - `grad_W1`: The gradient of the hidden layer weights.
-3. **Weight Update**: The weights are updated using the gradients and a learning rate.
+- Error Calculation: The error is calculated as the difference between the predicted probability distribution (`y_pred`) and the one-hot encoded target distribution (`y_true`).
+- Gradient Computation:
+   . `grad_W2`: The gradient of the output layer weights.
+   . `grad_W1`: The gradient of the hidden layer weights.
+- Weight Update: The weights are updated using the gradients and a learning rate.
 #### Implementation Summary:
 - Backward propagation is now fully implemented and computes the gradients for both `W1` and `W2`.
 - The gradients are calculated using the outer product and dot product operations, which follow the neural network's backpropagation algorithm.
