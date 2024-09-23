@@ -6,7 +6,7 @@ Welcome to the Continuous Bag of Words (`CBOW`) implementation in C++! This proj
 ### Implementation Details
 In this project, I've started implementing the `CBOW` model from scratch in **C++**. The goal is to provide an efficient, flexible, and customizable `CBOW` implementation suitable for various **NLP** tasks. Here's a brief overview of what has been accomplished so far:
 
-### Forward Propagation**:
+### Forward Propagation:
 The forward propagation function computes the hidden layer and the predicted probabilities for the context words given a center word. The implementation follows the architecture of a neural network with a single hidden layer.
 **Key Steps**:
 - Input Layer: Represents the center word as a one-hot encoded vector.
