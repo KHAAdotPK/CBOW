@@ -28,7 +28,7 @@ The backward propagation function computes the gradients of the weights based on
 - Backward propagation is now fully implemented and computes the gradients for both `W1` and `W2`.
 - The gradients are calculated using the outer product and dot product operations, which follow the neural network's backpropagation algorithm.
 
-3. **Full Softmax (Negative Sampling Pending)**:
+### Full Softmax (Negative Sampling Pending):
 This implementation currently uses the full softmax for calculating the output probabilities. **Negative Sampling** is a common technique used to optimize training in word embeddings, but it is **not yet implemented** in this version of the model. 
 Future updates will include Negative Sampling to make the training more efficient, especially for large vocabularies.
 
