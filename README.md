@@ -60,7 +60,7 @@ The next steps in this project include:
     ```bash
     git clone https://github.com/KHAAdotPK/CBOW.git
     ```
-2. Build the training program (ensure you have a C++11/14 compiler):
+2. Build the example training program (ensure you have a C++11/14 compiler):
     ```bash
     cd CBOW
     cd usage
