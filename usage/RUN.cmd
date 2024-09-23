@@ -1,0 +1,1 @@
+.\cow.exe corpus ./INPUT.txt lr 0.0001 epoch 30 rs 0.000001 verbose
