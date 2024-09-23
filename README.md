@@ -54,7 +54,6 @@ The next steps in this project include:
 - Integrating optimization algorithms such as Stochastic Gradient Descent (SGD).
 - Expanding the codebase to handle larger datasets efficiently.
 - Performing extensive testing and validation to ensure correctness and performance.
-- 
 ## Usage
 
 1. Clone the repository:
