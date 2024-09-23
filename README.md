@@ -1,35 +1,60 @@
-# CBOW Model Implementation in C++
+## Continuous Bag of Words (`CBOW`) Implementation in C++
+Welcome to the Continuous Bag of Words (`CBOW`) implementation in C++! This project is part of the broader effort to develop and experiment with `ML` models. `Word2Vec` is a popular technique in Natural Language Processing (`NLP`) for learning word embeddings from text data, enabling various downstream tasks such as semantic analysis, text classification, and machine translation.
+### Project Overview
+#### What is `CBOW`?
+`CBOW` is one of the two architectures proposed by **Mikolov et al**. for creating word embeddings, the other being [Skip-Gram](https://github.com/KHAAdotPK/skip-gram.git). In `CBOW`, the model predicts the target word (center word) based on the context words (surrounding words within a fixed window size). This approach captures the semantics of words by analyzing their context in large corpora, resulting in dense vector representations that encode meaningful relationships between words.
+### Implementation Details
+In this project, I've started implementing the `CBOW` model from scratch in **C++**. The goal is to provide an efficient, flexible, and customizable `CBOW` implementation suitable for various **NLP** tasks. Here's a brief overview of what has been accomplished so far:
 
-This repository contains an implementation of the **Continuous Bag of Words (CBOW)** model in C++. The CBOW model is part of the Word2Vec architecture and is used to learn word embeddings by predicting the center word in a context of surrounding words. This project is designed for training a simple neural network on text data, generating vector representations for words.
+1. **Forward Propagation**:
+The forward propagation function computes the hidden layer and the predicted probabilities for the context words given a center word. The implementation follows the architecture of a neural network with a single hidden layer.
+#### Key Steps:
+1. **Input Layer**: Represents the center word as a one-hot encoded vector.
+2. **Hidden Layer**: Projects the one-hot encoded vector to a continuous embedding using weights `W1`.
+3. **Output Layer**: Predicts the probability distribution over all words in the vocabulary using the softmax function on the output of the hidden layer.
+#### Implementation Summary:
+- Forward propagation is completed with matrix operations for the hidden and output layers.
+- The result is a prediction of the probability distribution over context words for a given center word.
 
-## Features
-- **CBOW Model**: Trains word embeddings by using context words to predict a center word.
-- **Efficient Training Loop**: Includes forward and backward propagation with custom weight update functions.
-- **Custom Structures**: Leverages `Collective` and `Numcy` for efficient reshaping and random shuffling of data.
-- **Shuffling Training Data**: Randomly shuffles word pairs in each epoch to prevent bias during training.
-- **Adjustable Learning Rate and Epochs**: Easily configurable parameters for learning rate and number of epochs.
+2. **Backward Propagation**:
+The backward propagation function computes the gradients of the weights based on the loss between the predicted probabilities and the actual context words (represented as one-hot vectors). These gradients are used to update the weight matrices `W1` and `W2`.
+#### Key Steps:
+1. **Error Calculation**: The error is calculated as the difference between the predicted probability distribution (`y_pred`) and the one-hot encoded target distribution (`y_true`).
+2. **Gradient Computation**:
+   - `grad_W2`: The gradient of the output layer weights.
+   - `grad_W1`: The gradient of the hidden layer weights.
+3. **Weight Update**: The weights are updated using the gradients and a learning rate.
+#### Implementation Summary:
+- Backward propagation is now fully implemented and computes the gradients for both `W1` and `W2`.
+- The gradients are calculated using the outer product and dot product operations, which follow the neural network's backpropagation algorithm.
 
-## How the CBOW Model Works
-1. **Context**: The model takes a set of context words as input.
-2. **Prediction**: It tries to predict the center word in the context window.
-3. **Training**: The weights between input and hidden layers (W1), and hidden to output layers (W2), are updated using backpropagation.
-4. **Loss Calculation**: Uses negative log-likelihood (NLL) for measuring the loss during training.
+3. **Full Softmax (Negative Sampling Pending)**:
+This implementation currently uses the full softmax for calculating the output probabilities. **Negative Sampling** is a common technique used to optimize training in word embeddings, but it is **not yet implemented** in this version of the model. 
+Future updates will include Negative Sampling to make the training more efficient, especially for large vocabularies.
 
-## Training Loop
-
-The core training loop can be found in the `#define CBOW_TRAINING_LOOP` macro. This loop:
-- Shuffles the word pairs before each epoch.
-- Implements forward and backward propagation.
-- Updates the weights `W1` and `W2` based on gradients.
-- Computes and displays the loss for each epoch.
-
-### Training Process
-The training loop works in the following steps:
-1. **Shuffle Word Pairs**: Before each epoch, the word pairs are shuffled.
-2. **Forward Propagation**: Predict the center word using the current weights.
-3. **Backward Propagation**: Calculate the gradients and adjust the weights based on the learning rate.
-4. **Loss Calculation**: Compute and print the average loss per epoch.
-
+4. **Training Loop**:
+The CBOW training loop defines the main process for training the word embedding model using forward and backward propagation. Each epoch iterates through shuffled word pairs and updates the weights accordingly. Below is an outline of how the training loop works.
+### Training Loop Details
+- **Epoch Loop**: The training runs for a specified number of epochs. Each epoch represents one complete pass through the training dataset.
+- **Shuffling Word Pairs**: Before each epoch, the word pairs are shuffled to ensure the model doesn't learn in a biased manner.
+- **Forward Propagation**: For each word pair, forward propagation computes the prediction probabilities using the current weights.
+- **Backward Propagation**: Based on the error (difference between predicted and actual output), the gradients are computed, which are then used to update the weights.
+- **Weight Updates**: 
+  - `W1` (input-to-hidden weights) and `W2` (hidden-to-output weights) are updated using the learning rate `lr`.
+  - `W2` is reshaped and updated to match the dimensional requirements for the subtraction and weight update steps.
+- **Loss Calculation**: The training loop calculates the loss using the **Negative Log Likelihood (NLL)** function, where lower values indicate better model performance.
+- **Verbose Output**: If verbose mode is enabled, the progress of each epoch and loss values are printed to the console.
+    
+5. **Error Handling**:
+    - Robust error handling has been incorporated to catch and report issues such as memory allocation failures and logical errors.
+    
+### Next Steps
+The next steps in this project include:
+- Currently, the implementation does not include **Negative Sampling**. This technique is commonly used in word embedding models to improve training efficiency by sampling negative examples during the training process. Implementing Negative Sampling will be essential to enhance the performance of the model.
+- Integrating optimization algorithms such as Stochastic Gradient Descent (SGD).
+- Expanding the codebase to handle larger datasets efficiently.
+- Performing extensive testing and validation to ensure correctness and performance.
+- 
 ## Usage
 
 1. Clone the repository:
@@ -55,21 +80,30 @@ The training loop works in the following steps:
 - **Verbose**: Enable to print detailed progress during training.
 
 ```cpp
-// Example usage
-#include "../lib/WordEmbedding-Algorithms/Word2Vec/CBOW/header.hh"
+#include "../lib/argsv-cpp/lib/parser/parser.hh"
 
 int main() {
-    // Initialize vocabulary, word pairs, and model weights (W1)
-    CORPUS_REF vocab = ...;
-    PAIRS pairs = ...;
-    Collective<double> W1 = ...;
+    cc_tokenizer::String<char> data = cc_tokenizer::cooked_read<char>(CBOW_DEFAULT_CORPUS_FILE);
+    cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> data_parser(data);
+    // Initialize vocabulary
+    class Corpus vocab(data_parser);
+    // Initialize word pairs    
+    PAIRS pairs(vocab);
 
-    // Define training parameters
-    size_t epochs = 10;
+    // Initialize weights W1, W2
+
+    Collective<double> W1 = Numcy::Random::randn(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
+    Collective<double> W2 = Numcy::Random::randn(DIMENSIONS{vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, NULL, NULL});
+
+    // Define training parameters    
+    size_t default_epochs = 10;
+    double default_lr = SKIP_GRAM_DEFAULT_LEARNING_RATE;    
+    double epoch_loss = 0.0;
+
     bool verbose = true;
 
-    // Start training
-    CBOW_TRAINING_LOOP(epochs, pairs, verbose, vocab, W1);
+    // Start training    
+    CBOW_TRAINING_LOOP(epoch_loass, default_epochs, default_lr, pairs, double, verbose, vocab, W1, W2);
 
     return 0;
 }
