@@ -56,7 +56,7 @@ The training loop works in the following steps:
 
 ```cpp
 // Example usage
-#include "cbow.hh"
+#include "../lib/WordEmbedding-Algorithms/Word2Vec/CBOW/header.hh"
 
 int main() {
     // Initialize vocabulary, word pairs, and model weights (W1)
