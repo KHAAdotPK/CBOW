@@ -44,9 +44,9 @@ The CBOW training loop defines the main process for training the word embedding 
   - `W2` is reshaped and updated to match the dimensional requirements for the subtraction and weight update steps.
 - **Loss Calculation**: The training loop calculates the loss using the **Negative Log Likelihood (NLL)** function, where lower values indicate better model performance.
 - **Verbose Output**: If verbose mode is enabled, the progress of each epoch and loss values are printed to the console.
-    
-5. **Error Handling**:
-    - Robust error handling has been incorporated to catch and report issues such as memory allocation failures and logical errors.
+
+### Error Handling:
+Robust error handling has been incorporated to catch and report issues such as memory allocation failures and logical errors.
     
 ### Next Steps
 The next steps in this project include:
