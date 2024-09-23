@@ -79,7 +79,7 @@ The next steps in this project include:
 - **Verbose**: Enable to print detailed progress during training.
 
 ```cpp
-#include "../lib/argsv-cpp/lib/parser/parser.hh"
+#include "../lib/WordEmbedding-Algorithms/Word2Vec/CBOW/header.hh"
 
 int main() {
     cc_tokenizer::String<char> data = cc_tokenizer::cooked_read<char>(CBOW_DEFAULT_CORPUS_FILE);
