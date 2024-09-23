@@ -24,7 +24,7 @@ The backward propagation function computes the gradients of the weights based on
    * `grad_W1`: The gradient of the hidden layer weights.
    * `grad_W2`: The gradient of the output layer weights.   
 - Weight Update: The weights are updated using the gradients and a learning rate.
-#### Implementation Summary:
+##### Implementation Summary:
 - Backward propagation is now fully implemented and computes the gradients for both `W1` and `W2`.
 - The gradients are calculated using the outer product and dot product operations, which follow the neural network's backpropagation algorithm.
 
