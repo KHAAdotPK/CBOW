@@ -21,8 +21,8 @@ The backward propagation function computes the gradients of the weights based on
 #### Key Steps:
 - Error Calculation: The error is calculated as the difference between the predicted probability distribution (`y_pred`) and the one-hot encoded target distribution (`y_true`).
 - Gradient Computation:
-   > `grad_W2`: The gradient of the output layer weights.
-   > `grad_W1`: The gradient of the hidden layer weights.
+   * `grad_W2`: The gradient of the output layer weights.
+   * `grad_W1`: The gradient of the hidden layer weights.
 - Weight Update: The weights are updated using the gradients and a learning rate.
 #### Implementation Summary:
 - Backward propagation is now fully implemented and computes the gradients for both `W1` and `W2`.
