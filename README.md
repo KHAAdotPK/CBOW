@@ -73,7 +73,7 @@ The next steps in this project include:
     ./RUN.cmd
     ```
 
-#### Example of skeleton training proram.
+#### Example of skeleton training program.
 ##### Parameters
 - **Epoch**: The number of times the model will iterate over the entire training data. Each epoch involves shuffling the word pairs and updating the weights based on the error between the predicted and actual context words.  
 - **Learning Rate**: A scalar value that controls the size of the weight updates during training. A higher learning rate may result in faster convergence but risks overshooting the optimal values, while a lower learning rate leads to slower convergence but more precise updates.
