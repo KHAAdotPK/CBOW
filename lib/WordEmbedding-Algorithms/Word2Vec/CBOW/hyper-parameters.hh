@@ -48,4 +48,21 @@
  */ 
 #define SKIP_GRAM_WINDOW_SIZE 2
 
+/*
+   The number of negative samples is a hyperparameter. 
+   It's often denoted as k, where k is the number of negative samples generated for each positive sample.
+
+   Positive Samples:
+   A positive sample is the context words as input and the center word as the target.
+   So, the number of positive samples is determined by the word-context pairs in your corpus.
+   These come directly from your training data (i.e., actual word-context relationships). 
+   You don't control their quantity directly since they are determined by the corpus and the context window size.
+
+   Negative Samples:
+   Negative sampling involves randomly selecting words from the vocabulary/corpus that are neither the center word nor the context words of one single positive sample.
+   You typically generate multiple negative samples for each positive sample.
+   It is common to generate more negative samples than positive ones, for example, 5 or 10 negative samples for each positive sample.   
+ */
+#define CBOW_NEGAIVE_SAMPLE_SIZE 10
+
 #endif
