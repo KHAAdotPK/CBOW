@@ -1,5 +1,8 @@
 #### Implementation of Negative Sampling in this CBOW model.
 ---
+**What are Negative Samples**?
+Negative samples are randomly selected words from the vocabulary that are not related to the current context words or the center word.
+
 In the CBOW training loop, Negative Sampling can be implemented within the training loop, specifically in the section where the forward and backward propagation occur. Here’s how it can be integrated
 1. **Before Forward Propagation**: After retrieving the current word pair(`a positive sample`), you can introduce a method to generate negative samples. This would involve selecting a set of negative words (i.e., words that are not related to the current context) based on your vocabulary. **In this method, make sure to avoid selecting the center/target word itself or any of the context words as negative samples**.
  ```C++
@@ -33,7 +36,7 @@ In the CBOW training loop, Negative Sampling can be implemented within the train
  *               The pair object should have methods getLeft() and getRight() that return arrays of context words.
  *             - This is positive sample
  *
- * @param n - The number of negative samples to generate. Defaults to the size of the skip-gram window (SKIP_GRAM_WINDOW_SIZE).
+ * @param n - The number of negative samples to generate. Defaults to the size of the skip-gram window (CBOW_NEGATIVE_SAMPLE_SIZE).
  *          - Typically, a small number of negative samples (5-20 per positive sample) are selected to avoid too many unnecessary computations
  *
  * @throws ala_exception - Throws this exception in case of memory allocation errors (`std::bad_alloc`) 
@@ -174,5 +177,5 @@ while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<cha
 {\
     /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
     WORDPAIRS_PTR pair = pairs.get_current_word_pair();\
-    cc_tokenizer::string_character_traits<char>::size_type* negative_samples_ptr = generateNegativeSamples_cbow(vocab, pair, static_cast<cc_tokenizer::string_character_traits<char>::size_type>(10));\
+    cc_tokenizer::string_character_traits<char>::size_type* negative_samples_ptr = generateNegativeSamples_cbow(vocab, pair, static_cast<cc_tokenizer::string_character_traits<char>::size_type>(CBOW_NEGATIVE_SAMPLE_SIZE));\
 ```
