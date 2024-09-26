@@ -33,6 +33,7 @@ In the CBOW training loop, Negative Sampling can be implemented within the train
  *               The pair object should have methods getLeft() and getRight() that return arrays of context words.
  *
  * @param n - The number of negative samples to generate. Defaults to the size of the skip-gram window (SKIP_GRAM_WINDOW_SIZE).
+ *          - Typically, a small number of negative samples (5-20 per positive sample) are selected to avoid too many unnecessary computations.
  *
  * @throws ala_exception - Throws this exception in case of memory allocation errors (`std::bad_alloc`) 
  *                         or length issues (`std::length_error`) during dynamic memory allocation.
