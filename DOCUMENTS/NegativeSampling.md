@@ -172,10 +172,16 @@ E* generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = CBOW
     return ptr;
 }
 ```
+**Training Loop**
 ```C++
 while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<char>::eof())\
 {\
     /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
+    /* This is one Positive Sample */\
     WORDPAIRS_PTR pair = pairs.get_current_word_pair();\
     cc_tokenizer::string_character_traits<char>::size_type* negative_samples_ptr = generateNegativeSamples_cbow(vocab, pair, static_cast<cc_tokenizer::string_character_traits<char>::size_type>(CBOW_NEGATIVE_SAMPLE_SIZE));\
+    ------------
+    -------------
+    --------------
+    cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().deallocate(negative_samples_ptr);
 ```
