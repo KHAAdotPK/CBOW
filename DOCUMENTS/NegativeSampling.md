@@ -1,7 +1,7 @@
 #### Implementation of Negative Sampling in this CBOW model.
 ---
 In the CBOW training loop, Negative Sampling can be implemented within the training loop, specifically in the section where the forward and backward propagation occur. Here’s how it can be integrated
-1. **Before Forward Propagation**: After retrieving the current word pair, you can introduce a method to generate negative samples. This would involve selecting a set of negative words (i.e., words that are not related to the current context) based on your vocabulary. **In this method, make sure to avoid selecting the center/target word itself or any of the context words as negative samples**.
+1. **Before Forward Propagation**: After retrieving the current word pair(`a positive sample`), you can introduce a method to generate negative samples. This would involve selecting a set of negative words (i.e., words that are not related to the current context) based on your vocabulary. **In this method, make sure to avoid selecting the center/target word itself or any of the context words as negative samples**.
  ```C++
 /*    
     In CBOW, we are predicting the central word, not the context.
@@ -45,7 +45,7 @@ In the CBOW training loop, Negative Sampling can be implemented within the train
  *                                                                   to avoid memory leaks.
  */
 template <typename E = cc_tokenizer::string_character_traits<char>::size_type>
-cc_tokenizer::string_character_traits<char>::size_type* generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = SKIP_GRAM_WINDOW_SIZE) throw (ala_exception)
+cc_tokenizer::string_character_traits<char>::size_type* generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = (SKIP_GRAM_WINDOW_SIZE*2 + 1)) throw (ala_exception)
 {    
     E lowerbound = 0 + INDEX_ORIGINATES_AT_VALUE;
     E higherbound = vocab.numberOfTokens() + INDEX_ORIGINATES_AT_VALUE - 1;
@@ -167,4 +167,11 @@ cc_tokenizer::string_character_traits<char>::size_type* generateNegativeSamples_
 
     return ptr;
 }
+```
+```C++
+while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<char>::eof())\
+{\
+    /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
+    WORDPAIRS_PTR pair = pairs.get_current_word_pair();\
+    cc_tokenizer::string_character_traits<char>::size_type* negative_samples_ptr = generateNegativeSamples_cbow(vocab, pair, static_cast<cc_tokenizer::string_character_traits<char>::size_type>(10));\
 ```
