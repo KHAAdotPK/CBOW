@@ -1,4 +1,4 @@
-#### Implementation of Negative Sampling in the implementation of this CBOW model
+#### Implementation of Negative Sampling in this CBOW model.
 ---
 In the CBOW training loop, Negative Sampling can be implemented within the training loop, specifically in the section where the forward and backward propagation occur. Here’s how it can be integrated
 1. **Before Forward Propagation**: After retrieving the current word pair, you can introduce a method to generate negative samples. This would involve selecting a set of negative words (i.e., words that are not related to the current context) based on your vocabulary. **In this method, make sure to avoid selecting the center/target word itself or any of the context words as negative samples**.
