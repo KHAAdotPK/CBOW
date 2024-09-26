@@ -172,7 +172,7 @@ E* generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = CBOW
     return ptr;
 }
 ```
-**Training Loop**
+**Training Loop**, how and where to call the function `generateNegativeSamples_cbow()`?
 ```C++
 while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<char>::eof())\
 {\
