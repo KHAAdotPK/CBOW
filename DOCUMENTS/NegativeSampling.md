@@ -5,47 +5,48 @@ In the CBOW training loop, Negative Sampling can be implemented within the train
  ```C++
 /*    
     In CBOW, we are predicting the central word, not the context.
-    So, the negative samples should be words that are not the central word (target) but could be drawn from the entire vocabulary.
+    So, the negative samples should be words that are not the central word (target) but could be drawn from the entire vocabulary
 
     A better way to phrase it:
     We need to randomly select words from the vocabulary that are not the target (central) word when given a context of surrounding words.
-    These negative samples help the model learn to distinguish between the true target word and unrelated words.
+    These negative samples help the model learn to distinguish between the true target word and unrelated words
 
     Is it ok to not find a single vocabulary word which is not in the center of context window?
-    In a large enough corpus, every word in the vocabulary could potentially be the central word for some context window at some point.                           
+    In a large enough corpus, every word in the vocabulary could potentially be the central word for some context window at some point
  */
 /**
- * @brief Generates negative samples for the CBOW model using negative sampling.
+ * @brief Generates negative samples for the CBOW model using negative sampling
  *
  * This function selects a set of negative samples (words) that are not related to the current target word (central word) being predicted.
  * Negative samples are randomly drawn from the vocabulary,
  * and the function ensures that the generated negative samples do not include the target word (central word) of the current context.
- * These negative samples are used to train the model to differentiate between the correct (target) word and unrelated (negative) words.
+ * These negative samples are used to train the model to differentiate between the correct (target) word and unrelated (negative) words
  *
  * @tparam E - Type of the elements, typically used for indexing and storing sizes.
- *             Defaults to the size type of cc_tokenizer::string_character_traits<char>.
+ *             Defaults to the size type of cc_tokenizer::string_character_traits<char>
  *
  * @param vocab - Reference to the corpus vocabulary from which to generate negative samples. 
  *                It must contain the method numberOfUniqueTokens(), which returns the total number 
- *                of unique words in the vocabulary.
+ *                of unique words in the vocabulary
  *
  * @param pair - Pointer to the word pair, representing the center/target word, left and right context words in the CBOW model.
  *               The pair object should have methods getLeft() and getRight() that return arrays of context words.
+ *             - This is positive sample
  *
  * @param n - The number of negative samples to generate. Defaults to the size of the skip-gram window (SKIP_GRAM_WINDOW_SIZE).
- *          - Typically, a small number of negative samples (5-20 per positive sample) are selected to avoid too many unnecessary computations.
+ *          - Typically, a small number of negative samples (5-20 per positive sample) are selected to avoid too many unnecessary computations
  *
  * @throws ala_exception - Throws this exception in case of memory allocation errors (`std::bad_alloc`) 
- *                         or length issues (`std::length_error`) during dynamic memory allocation.
+ *                         or length issues (`std::length_error`) during dynamic memory allocation
  *
  * @return cc_tokenizer::string_character_traits<char>::size_type* - Returns a pointer to an array of negative samples.
  *                                                                   The array contains `n` negative samples, where 
  *                                                                   each sample is an index into the vocabulary.
  *                                                                   The caller is responsible for deallocating this memory 
- *                                                                   to avoid memory leaks.
+ *                                                                   to avoid memory leaks
  */
 template <typename E = cc_tokenizer::string_character_traits<char>::size_type>
-cc_tokenizer::string_character_traits<char>::size_type* generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = (SKIP_GRAM_WINDOW_SIZE*2 + 1)) throw (ala_exception)
+E* generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = CBOW_NEGAIVE_SAMPLE_SIZE) throw (ala_exception)
 {    
     E lowerbound = 0 + INDEX_ORIGINATES_AT_VALUE;
     E higherbound = vocab.numberOfTokens() + INDEX_ORIGINATES_AT_VALUE - 1;
