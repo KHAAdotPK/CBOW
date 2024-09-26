@@ -72,7 +72,7 @@ cc_tokenizer::string_character_traits<char>::size_type* generateNegativeSamples_
     // Initialize random number generator
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<E> distrib(0 + INDEX_ORIGINATES_AT_VALUE, vocab.numberOfTokens() + INDEX_ORIGINATES_AT_VALUE - 1);
+    std::uniform_int_distribution<E> distrib(lowerbound, higherbound);
     
     E* ptr = NULL;
 
