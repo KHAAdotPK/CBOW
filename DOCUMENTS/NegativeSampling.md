@@ -183,5 +183,6 @@ while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<cha
     ------------
     -------------
     --------------
+    /* Deallocate Negative Samples array */\
     cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().deallocate(negative_samples_ptr);
 ```
