@@ -188,6 +188,6 @@ while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<cha
     ------------
     -------------
     --------------
-    /* Deallocate Negative Samples array */\
+    /* Deallocate Negative Samples array. The function generateNegativeSamples_cbow() returns a pointer to array of negative samples. The calling function is responsible for deallocation */\
     cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().deallocate(negative_samples_ptr);\
 ```
