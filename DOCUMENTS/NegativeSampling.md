@@ -1,7 +1,11 @@
 #### Implementation of Negative Sampling in this CBOW model.
 ---
+1. Positive Samples:
+    - For a given center word, you have a window of context words around it.
+    - In the CBOW model, the context words are the input, and the center word is the output.
+    - The word-context pairs you extract from your corpus are the positive samples because they represent the actual relationships between words that occur in your text.
 **What are Negative Samples**?
-Negative samples are randomly selected words from the vocabulary that are not related to the current context words or the current center/target word. For each positive sample, multiple negative samples are generated.
+Negative samples are randomly selected words from the vocabulary that are not related to the current context words or the current center/target word. For each positive sample, multiple negative samples are generated. Negative sampling helps the model learn by contrasting the positive samples with these randomly selected negative samples. By providing random words as negative samples, you're showing the model that those words should not be predicted as the center word given the current context.
 
 In the CBOW training loop, Negative Sampling can be implemented within the training loop, specifically in the section where the forward and backward propagation occur. Here’s how it can be integrated
 1. **Before Forward Propagation**: After retrieving the current word pair(`a positive sample`), you can introduce a method to generate negative samples. This would involve selecting a set of negative words (i.e., words that are not related to the current context) based on your vocabulary. **In this method, make sure to avoid selecting the center/target word itself or any of the context words as negative samples**.
