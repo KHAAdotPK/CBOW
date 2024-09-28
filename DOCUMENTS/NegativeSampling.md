@@ -192,3 +192,553 @@ while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<cha
     cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().deallocate(negative_samples_ptr);\
 ```
 2. **During Forward Propagation**: Modify the forward function to accept the negative samples as additional input. This way, the model can compute the probabilities not just for the positive context words but also for the negative samples.
+```C++            
+    struct forward_propogation<E>(Collective<E>& h, Collective<E>& y_pred_positive, Collective<E>& u_positive, Collective<E>& y_pred_negative, Collective<E>& u_negative)
+    {           
+        E* ptr = NULL;
+
+        try 
+        {                    
+            ptr = cc_tokenizer::allocator<E>().allocate(h.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < h.getShape().getN(); i++)
+            {
+                ptr[i] = h[i];                
+            }
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+           throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        hidden_layer_vector = Collective<E>{ptr, h.getShape().copy()};
+
+        try
+        {                 
+            ptr = cc_tokenizer::allocator<E>().allocate(y_pred_positive.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < y_pred_positive.getShape().getN(); i++)
+            {
+                ptr[i] = y_pred_positive[i];
+            }
+        } 
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }      
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        positive_predicted_probabilities = Collective<E>{ptr, y_pred_positive.getShape().copy()};
+
+        try
+        {        
+            ptr = cc_tokenizer::allocator<E>().allocate(u_positive.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < u_positive.getShape().getN(); i++)
+            {
+                ptr[i] = u_positive[i];
+            }
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }      
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        positive_intermediate_activation = Collective<E>{ptr, u_positive.getShape().copy()};
+
+        try
+        {                 
+            ptr = cc_tokenizer::allocator<E>().allocate(y_pred_negative.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < y_pred_negative.getShape().getN(); i++)
+            {
+                ptr[i] = y_pred_negative[i];
+            }
+        } 
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }      
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        negative_predicted_probabilities = Collective<E>{ptr, y_pred_negative.getShape().copy()};
+
+        try
+        {        
+            ptr = cc_tokenizer::allocator<E>().allocate(u_negative.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < u_negative.getShape().getN(); i++)
+            {
+                ptr[i] = u_negative[i];
+            }
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }      
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        negative_intermediate_activation = Collective<E>{ptr, u_negative.getShape().copy()};
+    }
+
+    forward_propogation<E>(forward_propogation<E>& other) 
+    {   
+        try
+        {
+            E* ptr = cc_tokenizer::allocator<E>().allocate(other.hidden_layer_vector.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.hidden_layer_vector.getShape().getN(); i++)
+            {
+                ptr[i] = other.hidden_layer_vector[i];
+            }
+            hidden_layer_vector = Collective<E>{ptr, other.hidden_layer_vector.getShape().copy()};
+
+            ptr = cc_tokenizer::allocator<E>().allocate(other.positive_predicted_probabilities.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.positive_predicted_probabilities.getShape().getN(); i++)
+            {
+                ptr[i] = other.positive_predicted_probabilities[i];
+            }
+            positive_predicted_probabilities = Collective<E>{ptr, other.positive_predicted_probabilities.getShape().copy()};
+
+            ptr = cc_tokenizer::allocator<E>().allocate(other.positive_intermediate_activation.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.positive_intermediate_activation.getShape().getN(); i++)
+            {
+                ptr[i] = other.positive_intermediate_activation[i];
+            }
+            positive_intermediate_activation = Collective<E>{ptr, other.positive_intermediate_activation.getShape().copy()};
+
+            ptr = cc_tokenizer::allocator<E>().allocate(other.negative_predicted_probabilities.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.negative_predicted_probabilities.getShape().getN(); i++)
+            {
+                ptr[i] = other.negative_predicted_probabilities[i];
+            }
+            negative_predicted_probabilities = Collective<E>{ptr, other.negative_predicted_probabilities.getShape().copy()};
+
+            ptr = cc_tokenizer::allocator<E>().allocate(other.negative_intermediate_activation.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.negative_intermediate_activation.getShape().getN(); i++)
+            {
+                ptr[i] = other.negative_intermediate_activation[i];
+            }
+            negative_intermediate_activation = Collective<E>{ptr, other.negative_intermediate_activation.getShape().copy()};
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }      
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }       
+    }
+
+    forward_propogation<E>& operator= (forward_propogation<E>& other)    
+    { 
+        if (this == &other)
+        {
+            return *this;
+        }
+
+        E* ptr = NULL;          
+
+        try 
+        {
+            ptr = cc_tokenizer::allocator<E>().allocate(other.hidden_layer_vector.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.hidden_layer_vector.getShape().getN(); i++)
+            {
+                ptr[i] = other.hidden_layer_vector[i];
+            }        
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+           throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        hidden_layer_vector = Collective<E>{ptr, other.hidden_layer_vector.getShape().copy()};
+
+        try
+        {                
+            ptr = cc_tokenizer::allocator<E>().allocate(other.positive_predicted_probabilities.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.positive_predicted_probabilities.getShape().getN(); i++)
+            {
+                ptr[i] = other.positive_predicted_probabilities[i];
+            }
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+           throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        positive_predicted_probabilities = Collective<E>{ptr, other.predicted_probabilities.getShape().copy()};
+
+        try
+        {                
+            ptr = cc_tokenizer::allocator<E>().allocate(other.negative_predicted_probabilities.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.negative_predicted_probabilities.getShape().getN(); i++)
+            {
+                ptr[i] = other.negative_predicted_probabilities[i];
+            }
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+           throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        negative_predicted_probabilities = Collective<E>{ptr, other.negative_predicted_probabilities.getShape().copy()};
+
+        try
+        {        
+            ptr = cc_tokenizer::allocator<E>().allocate(other.positive_intermediate_activation.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.positive_intermediate_activation.getShape().getN(); i++)
+            {
+                ptr[i] = other.positive_intermediate_activation[i];
+            }
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+           throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        positive_intermediate_activation = Collective<E>{ptr, other.positive_intermediate_activation.getShape().copy()};
+
+        try
+        {        
+            ptr = cc_tokenizer::allocator<E>().allocate(other.negative_intermediate_activation.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.negative_intermediate_activation.getShape().getN(); i++)
+            {
+                ptr[i] = other.negative_intermediate_activation[i];
+            }
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+           throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        negative_intermediate_activation = Collective<E>{ptr, other.negative_intermediate_activation.getShape().copy()};
+        
+        return *this;
+    }
+    
+    /*
+        Hidden Layer Vector accessor methods
+     */
+    E hlv(cc_tokenizer::string_character_traits<char>::size_type i) throw (ala_exception)
+    {
+        if (i >= hidden_layer_vector.getShape().getN())
+        {
+            throw ala_exception("forward_propogation::hlv() Error: Provided index value is out of bounds.");
+        }
+
+        return hidden_layer_vector[((i/hidden_layer_vector.getShape().getNumberOfColumns())*hidden_layer_vector.getShape().getNumberOfColumns() + i%hidden_layer_vector.getShape().getNumberOfColumns())];
+    }
+    DIMENSIONS hlvShape(void)
+    {
+        return *(hidden_layer_vector.getShape().copy());
+    }
+
+    /*
+        Positive Predicted Probabilities accesssor methods
+     */
+    E ppb(cc_tokenizer::string_character_traits<char>::size_type i) throw (ala_exception)
+    {
+        if (i >= positive_predicted_probabilities.getShape().getN())
+        {
+            throw ala_exception("forward_propogation::ppb() Error: Provided index value is out of bounds.");
+        }
+
+        return positive_predicted_probabilities[((i/positive_predicted_probabilities.getShape().getNumberOfColumns())*positive_predicted_probabilities.getShape().getNumberOfColumns() + i%positive_predicted_probabilities.getShape().getNumberOfColumns())];
+    }    
+    DIMENSIONS ppbShape(void)
+    {
+        return *(positive_predicted_probabilities.getShape().copy());
+    }
+
+    /*
+        Negative Predicted Probabilities accesssor methods
+     */
+    E npb(cc_tokenizer::string_character_traits<char>::size_type i) throw (ala_exception)
+    {
+        if (i >= negative_predicted_probabilities.getShape().getN())
+        {
+            throw ala_exception("forward_propogation::ppb() Error: Provided index value is out of bounds.");
+        }
+
+        return negative_predicted_probabilities[((i/negative_predicted_probabilities.getShape().getNumberOfColumns())*negative_predicted_probabilities.getShape().getNumberOfColumns() + i%negative_predicted_probabilities.getShape().getNumberOfColumns())];
+    }    
+    DIMENSIONS npbShape(void)
+    {
+        return *(negative_predicted_probabilities.getShape().copy());
+    }
+
+    /*
+        Positive Intermediate Activation accesssor methods
+     */
+    E pia(cc_tokenizer::string_character_traits<char>::size_type i) throw (ala_exception)
+    {
+        if (i >= positve_intermediate_activation.getShape().getN())
+        {
+            throw ala_exception("forward_propogation::ia() Error: Provided index value is out of bounds.");
+        }
+
+        return positive_intermediate_activation[((i/positive_intermediate_activation.getShape().getNumberOfColumns())*positive_intermediate_activation.getShape().getNumberOfColumns() + i%positive_intermediate_activation.getShape().getNumberOfColumns())];
+    }
+    DIMENSIONS piaShape(void)
+    {
+        return *(positive_intermediate_activation.getShape().copy());
+    }
+
+    /*
+        Negative Intermediate Activation accesssor methods
+     */
+    E nia(cc_tokenizer::string_character_traits<char>::size_type i) throw (ala_exception)
+    {
+        if (i >= negative_intermediate_activation.getShape().getN())
+        {
+            throw ala_exception("forward_propogation::ia() Error: Provided index value is out of bounds.");
+        }
+
+        return negative_intermediate_activation[((i/negative_intermediate_activation.getShape().getNumberOfColumns())*negative_intermediate_activation.getShape().getNumberOfColumns() + i%negative_intermediate_activation.getShape().getNumberOfColumns())];
+    }
+    DIMENSIONS piaShape(void)
+    {
+        return *(negative_intermediate_activation.getShape().copy());
+    }
+
+
+    /*
+        Declare forward as a friend function within the struct. It is templated, do we need it like this.
+     */    
+    /*
+        Documentation Note:
+        -------------------
+        The default argument for the template parameter is causing the following error during compilation:
+    
+        D:\ML\Embedding-Algorithms\Word2Vec\skip-gram\ML\Embedding-Algorithms\Word2Vec\skip-gram\skip-gram.hh(263): warning C4348: 'forward': redefinition of default parameter: parameter 1
+        D:\ML\Embedding-Algorithms\Word2Vec\skip-gram\ML\Embedding-Algorithms\Word2Vec\skip-gram\skip-gram.hh(355): note: see declaration of 'forward'
+        D:\ML\Embedding-Algorithms\Word2Vec\skip-gram\ML\Embedding-Algorithms\Word2Vec\skip-gram\skip-gram.hh(272): note: the template instantiation context (the oldest one first) is
+        main.cpp(169): note: see reference to class template instantiation 'forward_propagation<double>' being compiled
+
+        This error occurs at compile time because the friend declaration and the actual definition of the function both use the default argument for the template parameter. 
+        To resolve this error, remove the default argument from either the friend declaration or the definition. 
+
+        Example problematic friend declaration:
+    
+        template <typename T = double>
+        friend forward_propagation<T> forward(Collective<T>&, Collective<T>&, CORPUS_REF, WORDPAIRS_PTR, bool) throw (ala_exception);
+
+        Additional details about the friend declaration:
+        The above friend declaration is ineffective because no instance of the vector/composite class is being passed to this function as an argument.
+        Therefore, the function cannot access the private or protected members of the vector/composite class it is declared as a friend of.
+     */
+        
+    template <typename T>
+    friend backward_propogation<T> backward(Collective<T>&, Collective<T>&, CORPUS_REF, forward_propogation<T>&, WORDPAIRS_PTR, bool) throw (ala_exception);
+        
+    /*
+        TODO, uncomment the following statement and make all variables/properties of this vector private.
+     */                       
+    /*private:*/
+        /*
+            In the context of our CBOW/Skip-Gram model, h refers to the hidden layer vector obtained by averaging the embeddings of the context words.
+            It is used in both the forward and backward passes of the neural network.
+
+            The shape of this array is (1, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE), 
+            a single row vector with the size of the embedding dimension.
+         */
+        //E* h;
+        Collective<E> hidden_layer_vector;
+        /*
+            y_pred/y_pred_positive is a Numcy array of predicted probabilities of the output word given the input context. 
+            In our implementation, it is the output of the forward propagation step.
+
+            The shape of this array is (1, len(vocab)), indicating a single row vector with the length of the vocabulary and 
+            where each element corresponds to the predicted probability of a specific word.
+         */
+        //E* y_pred;
+        Collective<E> positive_predicted_probabilities;  
+
+        /*	
+            Represents an intermediat gradient.	 
+            This vector has shape (1, len(vocab)), similar to y_pred. 
+            It represents the result of the dot product operation between the center or target word vector "h" and the weight matrix W2.
+            The result stored in "u” captures the combined influence of hidden neurons on predicting context words. It provides a
+            numerical representation of how likely each word in the vocabulary is to be a context word of a given target 
+            word (within the skip-gram model).
+
+            The variable "u or positive_u" serves as an intermediary step in the forward pass, representing the activations before applying 
+            the “softmax” function to generate the predicted probabilities. 
+
+            It represents internal state in the neural network during the working of "forward pass".
+            This intermediate value is used in calculations involving gradients in "backward pass" or "back propogation"(the function backward).
+         */
+        //E* u;
+        Collective<E> positive_intermediate_activation; 
+
+        /*
+            Predicted probabilities for the negative samples, i.e., words that are not related to the context or target word.
+        
+            Shape: (N, len(vocab)), where N is the number of negative samples and each element represents the probability of
+            a specific word being incorrectly predicted as context.
+         */
+        Collective<E> negative_predicted_probabilities;
+
+        /*	
+            Intermediate activations from the dot product of the hidden layer and the weight matrix for the negative samples.
+            This vector represents the influence of hidden neurons on predicting negative samples.
+        
+            Shape: (N, len(vocab)), where N is the number of negative samples.
+         */
+        Collective<E> negative_intermediate_activation;
+};
+```
+```C++
+template <typename E = double>
+forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF vocab, WORDPAIRS_PTR pair = NULL, cc_tokenizer::string_character_traits<char>::size_type* negative_samples = NULL, cc_tokenizer::string_character_traits<char>::size_type num_negative_samples = 0) throw (ala_exception)
+{    
+    if (pair == NULL)
+    {
+        throw ala_exception("forward() Error: Null pointer passed, expected a valid WORDPAIRS_PTR.");
+    }
+
+    // Positive samples (context words) initialization
+    cc_tokenizer::string_character_traits<char>::size_type* ptr = NULL;
+    cc_tokenizer::string_character_traits<char>::size_type n = 0, j = 0;
+
+    // Calculate the number of valid context words
+    for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
+    {
+        if ((*(pair->getLeft()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+        {
+            n = n + 1;
+        }
+
+        if ((*(pair->getRight()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+        {
+            n = n + 1;
+        }        
+    }
+    
+    try
+    {
+        ptr = cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().allocate(n);
+
+        // Store context words in ptr
+        for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
+        {
+            if ((*(pair->getLeft()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+            {
+                ptr[j] = (*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE;
+                j = j + 1;
+            }
+        }
+        for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
+        {
+            if ((*(pair->getRight()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+            {
+                ptr[j] = (*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE;
+                j = j + 1;
+            }
+        }
+
+        Collective<cc_tokenizer::string_character_traits<char>::size_type> context = Collective<cc_tokenizer::string_character_traits<char>::size_type>{ptr, DIMENSIONS{n, 1, NULL, NULL}};
+
+        // Compute hidden layer (mean of context words' embeddings)
+        Collective<E> h = Numcy::mean(W1, context);
+
+        // Compute predictions for positive samples
+        Collective<E> u_positive = Numcy::dot(h, W2);
+        Collective<E> y_pred_positive = softmax<E>(u_positive);
+
+        // If negative samples exist, compute their probabilities
+        Collective<E> u_negative, y_pred_negative;
+        if (negative_samples != NULL && num_negative_samples > 0)
+        {
+            // Convert negative samples to Collective format
+            Collective<cc_tokenizer::string_character_traits<char>::size_type> neg_samples = Collective<cc_tokenizer::string_character_traits<char>::size_type>{negative_samples, DIMENSIONS{num_negative_samples, 1, NULL, NULL}};
+
+            // Compute the dot product for negative samples
+            u_negative = Numcy::dot(h, W2, neg_samples);
+            y_pred_negative = softmax<E>(u_negative);
+        }
+
+        // Return the results (you may want to store both positive and negative predictions for later use)
+        return forward_propogation<E>{h, y_pred_positive, u_positive, y_pred_negative, u_negative};
+    }
+    catch(std::bad_alloc& e)
+    {
+        throw ala_exception(cc_tokenizer::String<char>("forward() Error: ") + cc_tokenizer::String<char>(e.what()));
+    }
+    catch(std::length_error& e)
+    {
+        throw ala_exception(cc_tokenizer::String<char>("forward() Error: ") + cc_tokenizer::String<char>(e.what()));
+    }
+    catch(ala_exception& e)
+    {
+        throw ala_exception(cc_tokenizer::String<char>("forward() Error: ") + cc_tokenizer::String<char>(e.what()));
+    }                    
+}
+```
