@@ -103,7 +103,7 @@ int main() {
     bool verbose = true;
 
     // Start training    
-    CBOW_TRAINING_LOOP(epoch_loass, default_epochs, default_lr, pairs, double, verbose, vocab, W1, W2);
+    CBOW_TRAINING_LOOP(epoch_loss, default_epochs, default_lr, pairs, double, verbose, vocab, W1, W2);
 
     return 0;
 }
