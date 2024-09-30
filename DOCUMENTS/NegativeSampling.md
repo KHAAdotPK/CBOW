@@ -191,7 +191,9 @@ while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<cha
     /* Deallocate Negative Samples array. The function generateNegativeSamples_cbow() returns a pointer to array of negative samples. The calling function is responsible for deallocation */\
     cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().deallocate(negative_samples_ptr);\
 ```
-2. **During Forward Propagation**: Modify the forward function to accept the negative samples as additional input. This way, the model can compute the probabilities not just for the positive context words but also for the negative samples.
+2. **During Forward Propagation**: Modify the forward propogation function to accept the negative samples as additional input. This way, the model can compute the probabilities(between 0 and 1) not just for the positive samples but also for the negative samples. One more thing is that thes computed probabilities are between 0 and 1 for both positive and negative samples.
+    - `Positive predicted probabilities` (for positive samples) should be close to 1.
+    - `Negative predicted probabilities` (for negative samples) should be close to 0.
 ```C++            
     struct forward_propogation<E>(Collective<E>& h, Collective<E>& y_pred_positive, Collective<E>& u_positive, Collective<E>& y_pred_negative, Collective<E>& u_negative)
     {           
@@ -563,7 +565,7 @@ while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<cha
 
         return negative_intermediate_activation[((i/negative_intermediate_activation.getShape().getNumberOfColumns())*negative_intermediate_activation.getShape().getNumberOfColumns() + i%negative_intermediate_activation.getShape().getNumberOfColumns())];
     }
-    DIMENSIONS piaShape(void)
+    DIMENSIONS niaShape(void)
     {
         return *(negative_intermediate_activation.getShape().copy());
     }
