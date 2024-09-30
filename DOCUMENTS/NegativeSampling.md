@@ -505,7 +505,7 @@ while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<cha
     /*
         Positive Predicted Probabilities accesssor methods
      */
-    E ppb(cc_tokenizer::string_character_traits<char>::size_type i) throw (ala_exception)
+    E ppp(cc_tokenizer::string_character_traits<char>::size_type i) throw (ala_exception)
     {
         if (i >= positive_predicted_probabilities.getShape().getN())
         {
@@ -514,7 +514,7 @@ while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<cha
 
         return positive_predicted_probabilities[((i/positive_predicted_probabilities.getShape().getNumberOfColumns())*positive_predicted_probabilities.getShape().getNumberOfColumns() + i%positive_predicted_probabilities.getShape().getNumberOfColumns())];
     }    
-    DIMENSIONS ppbShape(void)
+    DIMENSIONS pppShape(void)
     {
         return *(positive_predicted_probabilities.getShape().copy());
     }
@@ -522,7 +522,7 @@ while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<cha
     /*
         Negative Predicted Probabilities accesssor methods
      */
-    E npb(cc_tokenizer::string_character_traits<char>::size_type i) throw (ala_exception)
+    E npp(cc_tokenizer::string_character_traits<char>::size_type i) throw (ala_exception)
     {
         if (i >= negative_predicted_probabilities.getShape().getN())
         {
@@ -531,7 +531,7 @@ while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<cha
 
         return negative_predicted_probabilities[((i/negative_predicted_probabilities.getShape().getNumberOfColumns())*negative_predicted_probabilities.getShape().getNumberOfColumns() + i%negative_predicted_probabilities.getShape().getNumberOfColumns())];
     }    
-    DIMENSIONS npbShape(void)
+    DIMENSIONS nppShape(void)
     {
         return *(negative_predicted_probabilities.getShape().copy());
     }
@@ -748,4 +748,30 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
     - **Positive Loss Calculation** :  `−log(p)` where `p` is the predicted probability that positive sample is postive. That is when `p` is close to `1` then, `-log(p)` is very close to `0` which means a small loss.
     - **Negative Loss Calculation** :  `-log(1 − q)` where `q` is the predicted probability that negative sample is positive. That is when `q` is close to `0` then `-log(1 - q)` is very close to `0` as well, which means a small loss.
         - If the model incorrectly predicts that a negative sample is actually a positive sample (i.e., `𝑞` is high, close to `1`), then `1 − 𝑞` becomes very small, and the `−log(1 − 𝑞)` becomes large. This penalizes the model for making such mistakes.
-    
+
+The total loss (or cost function) you compute is a sum of the positive and negative losses: Total Loss = Positive Loss + ∑Negative Loss
+
+```C++
+// Initialize the loss
+E el = 0.0;
+
+// Calculate positive loss (for the center word)
+E positive_loss = -1 * log(fp.ppp(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE));
+el += positive_loss;
+
+// Calculate negative loss (for negative samples)
+if (negative_samples != NULL && num_negative_samples > 0) 
+{
+    for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < num_negative_samples; ++i)
+    {
+        // Assuming y_pred_negative is a Collective<E> that holds probabilities for negative samples
+        E negative_loss = -1 * log(1 - fp.npp(i)); // Calculate loss for each negative sample
+        el += negative_loss;
+    }
+}
+
+// el now contains the total loss including both positive and negative samples
+```
+
+​
+   
