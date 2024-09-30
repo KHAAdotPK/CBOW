@@ -744,7 +744,7 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
     }                    
 }
 ```
-3. During Loss Calculation: Update the loss function to consider both the positive and negative samples. Instead of only using **Negative Log Likelihood** (`NLL`) for the positive context, it will also include terms for the negative samples, which should contribute to a lower loss when correctly identified as non-context words.
+3. **During Loss Calculation**: Update the loss function to consider both the positive and negative samples. Instead of only using **Negative Log Likelihood** (`NLL`) for the positive context, it will also include terms for the negative samples, which should contribute to a lower loss when correctly identified as non-context words.
     - **Positive Loss Calculation** :  `−log(p)` where `p` is the predicted probability that positive sample is postive. That is when `p` is close to `1` then, `-log(p)` is very close to `0` which means a small loss.
     - **Negative Loss Calculation** :  `-log(1 − q)` where `q` is the predicted probability that negative sample is positive. That is when `q` is close to `0` then `-log(1 - q)` is very close to `0` as well, which means a small loss.
         - If the model incorrectly predicts that a negative sample is actually a positive sample (i.e., `𝑞` is high, close to `1`), then `1 − 𝑞` becomes very small, and the `−log(1 − 𝑞)` becomes large. This penalizes the model for making such mistakes.
