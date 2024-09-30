@@ -9,6 +9,7 @@ int main(int argc, char* argv[])
 { 
     ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose;
     cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> argsv_parser(cc_tokenizer::String<char>(COMMAND));
+    
     cc_tokenizer::String<char> data;
 
     FIND_ARG(argv, argc, argsv_parser, "?", arg_help);
@@ -77,7 +78,7 @@ int main(int argc, char* argv[])
             return -1;
         }
     }
-
+    
     /*        
         In the context of training a machine learning model, an epoch is defined as a complete pass over the entire training dataset during training.
         One epoch is completed when the model has made one update to the weights based on each training sample in the dataset.
@@ -86,7 +87,7 @@ int main(int argc, char* argv[])
         The number of epochs to train for is typically set as a hyperparameter, and it depends on the specific problem and the size of the dataset. 
         One common approach is to monitor the performance of the model on a validation set during training, and stop training when the performance 
         on the validation set starts to degrade.
-     */
+     */    
     unsigned long default_epoch = SKIP_GRAM_DEFAULT_EPOCH;    
     FIND_ARG(argv, argc, argsv_parser, "e", arg_epoch);
     if (arg_epoch.i)
@@ -130,7 +131,7 @@ int main(int argc, char* argv[])
     }
     
     cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> data_parser(data);
-    class Corpus vocab(data_parser);
+    class Corpus vocab(data_parser);    
     PAIRS pairs(vocab/*, arg_verbose.i ? true : false*/);
 
     /*
@@ -162,7 +163,7 @@ int main(int argc, char* argv[])
 
         * By predicting surrounding context words based on the central word's embedding, Skip-gram learns to capture semantic relationships between words with similar contexts.
      */
-
+    
     Collective<double> W1;
     Collective<double> W2;
 
@@ -180,6 +181,6 @@ int main(int argc, char* argv[])
                  
     //CBOW_TRAINING_LOOP(default_epoch, W1, W2, epoch_loss, vocab, pairs, default_lr, default_rs, double, arg_verbose.i ? true : false);
     CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, pairs, double, arg_verbose.i ? true : false, vocab, W1, W2);
-                
+                    
     return 0;
 }

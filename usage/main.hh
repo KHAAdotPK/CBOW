@@ -16,9 +16,13 @@
 #ifdef GRAMMAR_END_OF_LINE_MARKER
 #undef GRAMMAR_END_OF_LINE_MARKER
 #endif
+#ifdef GRAMMAR_START_OF_COMMENT_MARKER
+#undef GRAMMAR_START_OF_COMMENT_MARKER	
+#endif
 
 #define GRAMMAR_END_OF_TOKEN_MARKER ' '
 #define GRAMMAR_END_OF_LINE_MARKER '\n'
+#define GRAMMAR_START_OF_COMMENT_MARKER '('
 
 #include "../lib/argsv-cpp/lib/parser/parser.hh"
 #include "../lib/sundry/cooked_read_new.hh"
