@@ -1,4 +1,4 @@
-## __Forward__ ~~and __Backward__ propogation~~ in `CBOW` and `Skip-gram`
+## __Forward__ ~~and __Backward__~~ propogation in `CBOW` and `Skip-gram` 
 **Word2Vec** has two **word embedding algorithms**, the `Skip-gram` and `CBOW`. `Skip-gram` predicts context words for a center/target word, while `CBOW` predicts the center/target word for given context words.
 #### Steps involved in Forward propogation are more or less similar in `CBOW` and `Skip-gram`
 1. **Context Extraction**:
