@@ -58,19 +58,48 @@ The next steps in this project include:
 - Integrating optimization algorithms such as Stochastic Gradient Descent (SGD).
 - Expanding the codebase to handle larger datasets efficiently.
 - Performing extensive testing and validation to ensure correctness and performance.
-## Usage
+
+### Dependencies
+Before building and running the `CBOW` project, you need to clone and set up the following repositories, which contain essential libraries and utilities:
+```bash
+git clone https://github.com/KHAAdotPK/String.git
+git clone https://github.com/KHAAdotPK/parser.git
+git clone https://github.com/KHAAdotPK/ala_exception.git
+git clone https://github.com/KHAAdotPK/allocator.git
+git clone https://github.com/KHAAdotPK/sundry.git
+git clone https://github.com/KHAAdotPK/argsv-cpp.git
+git clone https://github.com/KHAAdotPK/corpus.git
+git clone https://github.com/KHAAdotPK/Numcy.git
+git clone https://github.com/KHAAdotPK/csv.git
+git clone https://github.com/KHAAdotPK/pairs.git
+```
+Ensure that these repositories are cloned into `lib` directory of your project directory before building the CBOW. implementation.
+
+Alternatively, in the lib directory of this project, you will find a PULL.cmd file. Executing this file will automatically clone all the above repositories for you:
+```bash
+cd lib
+./PULL.cmd
+```
+
+### Usage
 
 1. Clone the repository:
     ```bash
     git clone https://github.com/KHAAdotPK/CBOW.git
     ```
-2. Build the example training program (ensure you have a C++11/14 compiler):
+2.  In the lib directory of this project, you will find a PULL.cmd file. Executing this file will automatically clone all the above repositories for you:
+    ```bash
+    cd CBOW
+    cd lib
+    ./PULL.cmd
+    ```   
+3. Build the example training program (ensure you have a C++11/14 compiler):
     ```bash
     cd CBOW
     cd usage
     ./BUILD.cmd    
     ```
-3. Run the training program with your dataset:
+4. Run the training program with your dataset:
     ```bash
     cd CBOW
     cd usage
@@ -112,4 +141,3 @@ int main() {
     return 0;
 }
 ```
-
