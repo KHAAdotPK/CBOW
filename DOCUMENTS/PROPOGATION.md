@@ -57,6 +57,7 @@ Collective<double> h = Numcy::mean(W1, context);
 Collective<E> u = Numcy::dot(h, W2);
 ```
 This transformation step(`the dot product`) is crucial in both algorithms to map the hidden representation to the vocabulary space.
+
 3. **Positive predicted probablities**:
 ```C++
         /*
