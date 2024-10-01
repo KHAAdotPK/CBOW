@@ -3,6 +3,8 @@
     Q@khaa.pk
  */
 
+// https://youtube.com/clip/UgkxOY6Uv_SIhahJIA0_WAjG5s-Uq9dPXoam?si=PPBjZOmndTI5I7sF
+
 #include <iostream>
 
 #ifndef WORD_EMBEDDING_ALGORITHMS_CBOW_USAGE_MAIN_HH
@@ -26,6 +28,7 @@
 
 #include "../lib/argsv-cpp/lib/parser/parser.hh"
 #include "../lib/sundry/cooked_read_new.hh"
+#include "../lib/sundry/cooked_write_new.hh"
 
 #include "../lib/WordEmbedding-Algorithms/Word2Vec/CBOW/header.hh"
 

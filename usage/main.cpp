@@ -181,6 +181,8 @@ int main(int argc, char* argv[])
                  
     //CBOW_TRAINING_LOOP(default_epoch, W1, W2, epoch_loss, vocab, pairs, default_lr, default_rs, double, arg_verbose.i ? true : false);
     CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, pairs, double, arg_verbose.i ? true : false, vocab, W1, W2);
-                    
+
+    std::cout<< "Training done!" << std::endl;
+                
     return 0;
 }
