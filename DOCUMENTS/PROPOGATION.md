@@ -51,6 +51,9 @@ Collective<double> h = Numcy::mean(W1, context);
 3. **Dot Product with Output Weights**:
 - Both algorithms then perform a dot product between the hidden layer representation (h) and the output weight matrix (W2).
 ```C++
+/*
+    The dot product gives us the logits or unnormalized probabilities (u), which can then be transformed into probabilities using a softmax function
+ */
 Collective<E> u = Numcy::dot(h, W2);
 ```
 This transformation step is crucial in both algorithms to map the hidden representation to the vocabulary space.
