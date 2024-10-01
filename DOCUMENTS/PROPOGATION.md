@@ -48,7 +48,7 @@ Collective<cc_tokenizer::string_character_traits<char>::size_type> context = Col
  */
 Collective<double> h = Numcy::mean(W1, context);
 ```
-3. **Dot Product with Output Weights**:
+2. **Dot Product with Output Weights**:
 - Both algorithms then perform a dot product between the hidden layer representation (h) and the output weight matrix (W2).
 ```C++
 /*
@@ -56,4 +56,15 @@ Collective<double> h = Numcy::mean(W1, context);
  */
 Collective<E> u = Numcy::dot(h, W2);
 ```
-This transformation step is crucial in both algorithms to map the hidden representation to the vocabulary space.
+This transformation step(`the dot product`) is crucial in both algorithms to map the hidden representation to the vocabulary space.
+3. **Positive predicted probablities**:
+```C++
+        /*
+            The resulting vector (u) is passed through a softmax function to obtain the predicted probabilities (y_pred). 
+            The softmax function converts the raw scores into probabilities.
+         */
+        Collective<E> y_pred = softmax<E>(u);
+```
+    - In `Skip-gram`, this output represents the likelihood of each word being one of the context words for the given center word.
+    - In `CBOW`, this output represents the likelihood of each word being the target word, given the context words.
+
