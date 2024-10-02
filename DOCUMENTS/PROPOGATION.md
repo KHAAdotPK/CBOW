@@ -154,4 +154,55 @@ In `CBOW`, the objective is to predict the center/target word based on the surro
         The gradient (grad_u) is used to update the embeddings of the context words, based on the error between the predicted center word and the true center word.
      */
 ```
+**Weight Updates**: After computing the gradient (grad_u), lets see how the weights of both the input (`W1`) and output (`W2`) matrices are updated using [gradient descent](https://sl.bing.net/gYFMmaHXwDA).
+
+1. `Skip-gram` backpropagation weight updates: After calculating the gradients (grad_u), the next step is to update both the input weight matrix (`W1`) and the output weight matrix (`W2`) using [gradient descent](https://sl.bing.net/gYFMmaHXwDA).
+    - **Updating Output Weights (W2)**:
+    You first compute `grad_W2`, which represents the gradient of the loss function with respect to the weights in `W2`. This is done by taking the outer product of the hidden layer activations (`fp.intermediate_activation`) and the gradient of the loss (`grad_u`).
+    ```C++
+    Collective<T> grad_W2 = Numcy::outer(fp.intermediate_activation, grad_u);
+    ```
+    This step calculates how much the output weights (`W2`) need to change to reduce the error in predicting the context words.
+    - **Computing Gradient for Hidden Layer (grad_h) Update**:
+    Next, you compute the gradient for the hidden layer (grad_h) using the transpose of W2. This is done by performing a dot product between grad_u and the transposed W2.
+    ```C++
+    Collective<T> W2_T = Numcy::transpose(W2);
+    Collective<T> grad_h = Numcy::dot(grad_u, W2_T);    
+    ```
+    The result, `grad_h`, represents how much the error signal propagates back to the hidden layer, which is used to update the center word's embedding in the input weight matrix (`W1`).
+    - **Updating Input Weights (W1)**:
+    After computing the error signal (`grad_h`), you update the center word's embedding in `W1`. Here, you're iterating over the columns of `grad_W1` and adding the gradient values to the corresponding embedding of the center word.
+    ```C++
+    Collective<T> grad_W1 = Numcy::zeros(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
+
+    for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < grad_W1.getShape().getNumberOfColumns(); i++)
+    {
+        grad_W1[(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE)*SKIP_GRAM_EMBEDDNG_VECTOR_SIZE + i] += grad_h[i];
+    }
+    ```
+    This process adjusts the input weights based on how well the model predicted the context words. The update rule typically involves subtracting the gradient (scaled by the `learning rate`) from the current weights.
+    ```C++
+    // grad_weights_input_to_hidden is grad_W1
+    W1 -= bp.grad_weights_input_to_hidden * lr;
+    // grad_weights_hidden_to_output is grad_W2
+    Collective<t> W2_reshaped = Numcy::reshape(W2, bp.grad_weights_hidden_to_output);
+    W2_reshaped -= bp.grad_weights_hidden_to_output * lr;
+    // Update W2
+    for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < W2.getShape().getDimensionsOfArray().getNumberOfInnerArrays(); i++)
+    {
+        for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < W2.getShape().getNumberOfColumns(); j++)
+        {
+            W2[i*W2.getShape().getNumberOfColumns() + j] = W2_reshaped[i*W2_reshaped.getShape().getNumberOfColumns() + j];\
+        }
+    }
+    ```
+
+    
+
+
+
+
+
+
+
 
