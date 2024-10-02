@@ -1,6 +1,3 @@
-# THIS PAPER IS STILL NOT FINISHED.
-----
-
 ## __Forward__ ~~and __Backward__~~ propogation in `CBOW` and `Skip-gram` 
 **Word2Vec** has two **word embedding algorithms**, the `Skip-gram` and `CBOW`. `Skip-gram` predicts context words for a center/target word, while `CBOW` predicts the center/target word for given context words.
 #### Steps involved in Forward propogation are more or less similar in `CBOW` and `Skip-gram`
@@ -74,8 +71,8 @@ This transformation step(`the dot product`) is crucial in both algorithms to map
     - In `Skip-gram`, this output represents the likelihood of each word being one of the context words for the given center word.
     - In `CBOW`, this output represents the likelihood of each word being the target word, given the context words.
 
-## ~~__Forward__ and ~~__Backward__ propogation in `CBOW` and `Skip-gram` 
-In `skip-gram`, the objective is to predict the surrounding context words based on the center/target word, so during **backward propagation**, you compare the ~~positive~~ **predicted probabilities** (from **forward propagation**) to a **one-hot** encoded representation of the context words. This helps to update the weights based on how well the model predicted the actual context words given the center/target word.
+## ~~__Forward__ and~~ __Backward__ propogation in `CBOW` and `Skip-gram` 
+In `Skip-gram`, the objective is to predict the surrounding context words based on the center/target word, so during **backward propagation**, you compare the ~~positive~~ **predicted probabilities** (from **forward propagation**) to a **one-hot** encoded representation of the context words. This helps to update the weights based on how well the model predicted the actual context words given the center/target word.
 ```C++    
      /*
         Creating a One-Hot Vector, using Numcy::zeros with a shape of (1, vocab.numberOfUniqueTokens()).
@@ -111,7 +108,7 @@ In `skip-gram`, the objective is to predict the surrounding context words based 
         from the predicted probability distribution.
         `fp.predicted_probabilities` contains the predicted probabilities over all words in the vocabulary.
         `oneHot` is a one-hot vector representing the true context word in the vocabulary.
-        The result, `grad_u`, is the error signal for updating the center word's embedding in the skip-gram model.
+        The result, `grad_u`, is the error signal for updating the center word's embedding in the Skip-gram model.
 
         what is an error signal?
         -------------------------
@@ -120,7 +117,9 @@ In `skip-gram`, the objective is to predict the surrounding context words based 
      */
     Collective<T> grad_u = Numcy::subtract<double>(fp.positive_predicted_probabilities, oneHot);
 
-    The gradient (grad_u) used to update both the center word and the context word embeddings. 
+    /*
+        The gradient (grad_u) used to update both the center word and the context word embeddings. 
+     */
 ```
 In `CBOW`, the objective is to predict the center/target word based on the surrounding context words, so during **backward propagation**, you compare the ~~positive~~ **predicted probabilities** (from **forward propagation**) to a **one-hot** encoded representation of the center/target word. This helps to update the weights based on how well the model predicted the actual center/target word for the given context words.
 ```C++
@@ -130,10 +129,29 @@ In `CBOW`, the objective is to predict the center/target word based on the surro
      */
     Collective<T> oneHot = Numcy::zeros(DIMENSIONS{vocab.numberOfUniqueTokens(), 1, NULL, NULL});
 
+    /*
+        In the one-hot vector, the position corresponding to the center/target word is set to 1, and all other positions are 0.
+     */
     oneHot[pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE] = 1;
+    
+    /* 
+        The shape of `grad_u` is the same as `y_pred` (fp.predicted_probabilities) which is (1, len(vocab)).
 
+        Compute the gradient for the center word embedding by subtracting the one-hot vector of the center/target word
+        from the predicted probability distribution.
+        `fp.predicted_probabilities` contains the predicted probabilities over all words in the vocabulary.
+        `oneHot` is a one-hot vector representing the true center word in the vocabulary.
+        The result, `grad_u`, is the error signal for updating the context words' embeddings in the CBOW model.
+
+        What is an error signal?
+        -------------------------
+        1. For the correct center/target word (where `oneHot` is 1), the gradient is (predicted_probabilities - 1), meaning the model's prediction was off by that much.
+        2. For all other words (where `oneHot` is 0), the gradient is simply `predicted_probabilities`, meaning the model incorrectly assigned a nonzero probability to these words.
+     */
     Collective<T> grad_u = Numcy::subtract<double>(fp.positive_predicted_probabilities, oneHot);
-
-    The gradient (grad_u) used to update both the center word and the context word embeddings. 
+    
+    /*
+        The gradient (grad_u) is used to update the embeddings of the context words, based on the error between the predicted center word and the true center word.
+     */
 ```
 
