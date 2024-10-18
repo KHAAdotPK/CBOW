@@ -154,9 +154,9 @@ In `CBOW`, the objective is to predict the center/target word based on the surro
         The gradient (grad_u) is used to update the embeddings of the context words, based on the error between the predicted center word and the true center word.
      */
 ```
-**Weight Updates**: After computing the gradient (grad_u), lets see how the weights of both the input (`W1`) and output (`W2`) matrices are updated using [gradient descent](https://sl.bing.net/gYFMmaHXwDA).
+**Weight Updates**: After computing the gradient (grad_u), lets see how the weights of both the input (`W1`) and output (`W2`) matrices are updated using [gradient descent](./GradientDescent.md).
 
-1. `Skip-gram` backpropagation weight updates: After calculating the gradients (grad_u), the next step is to update both the input weight matrix (`W1`) and the output weight matrix (`W2`) using [gradient descent](https://sl.bing.net/gYFMmaHXwDA).
+1. `Skip-gram` backpropagation weight updates: After calculating the gradients (grad_u), the next step is to update both the input weight matrix (`W1`) and the output weight matrix (`W2`) using [gradient descent](./GradientDescent.md).
     - **Updating Output Weights (W2)**:
     You first compute `grad_W2`, which represents the gradient of the loss function with respect to the weights in `W2`. This is done by taking the outer product of the hidden layer activations (`fp.intermediate_activation`) and the gradient of the loss (`grad_u`).
     ```C++
