@@ -913,39 +913,54 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
     cc_tokenizer::string_character_traits<char>::size_type* ptr = NULL;
     cc_tokenizer::string_character_traits<char>::size_type n = 0, j = 0;
 
-    // Calculate the number of valid context words
+    /*
+        Counting Valid Context Words:
+        --------------------------------
+        The following loop calculates the number of context words in the pair that are not padding tokens.
+        This information is used to determine the size of the context array (ptr) that stores the indices of the context words.
+        The context array is used to compute the hidden layer vector (h) by averaging the embeddings of the context words
+
+        INDEX_ORIGINATES_AT_VALUE IS a threshold to determine if a word index is valid.  
+        "n" keeps track of the total number of valid context words
+     */    
     for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
     {
         if ((*(pair->getLeft()))[i] >= INDEX_ORIGINATES_AT_VALUE)
         {
-            n = n + 1;
-
-            //std::cout<< " 1 " << ", ";
-
-            //std::cout << vocab[(*(pair->getLeft()))[i]].c_str();
+            n = n + 1;      
         }
         else
         {
-            //std::cout<< " 0 " << ", ";
+            // Unnecessary
         }
 
         if ((*(pair->getRight()))[i] >= INDEX_ORIGINATES_AT_VALUE)
         {
-            n = n + 1;
-
-            //std::cout<< " 1 " << ", ";
+            n = n + 1;            
         }
         else 
         {
-            //std::cout<< " 0 " << ", ";
+            // Unnecessary
         }        
     }
     
     try
-    {
-        ptr = cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().allocate(/*SKIP_GRAM_WINDOW_SIZE*2*/ n);
-
-        // Store context words in ptr
+    {   /*
+            Allocating Memory for Context Words:
+            ---------------------------------------
+            Allocate memory for the context array (ptr) based on the number of valid context words (n).
+            The context array stores the indices of the context words, which are used to compute the hidden layer vector (h).
+            The size of the context array is determined by the number of valid context words in the pair.
+         */
+        ptr = cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().allocate(/* At most it can be SKIP_GRAM_WINDOW_SIZE*2 */ n);
+        
+        /*
+            Storing Context Words:
+            -------------------------
+            The following loop populates the context array (ptr) with the indices of the valid context words from the pair.
+            The indices are stored in the context array to compute the hidden layer vector (h) by averaging the embeddings of the context words.
+            The loop iterates over the context words in the pair and stores their indices in the context array.
+         */
         for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
         {
             if ((*(pair->getLeft()))[i] >= INDEX_ORIGINATES_AT_VALUE)
@@ -953,9 +968,7 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
                 ptr[j] = (*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE;
 
                 j = j + 1;
-            }
-            //ptr[i] = (*(pair->getLeft()))[i]; 
-            //ptr[SKIP_GRAM_WINDOW_SIZE + i] = (*(pair->getRight()))[SKIP_GRAM_WINDOW_SIZE + i];
+            }            
         }
         for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
         {
@@ -964,13 +977,24 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
                 ptr[j] = (*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE;
 
                 j = j + 1;
-            }
-            //ptr[i] = (*(pair->getLeft()))[i]; 
-            //ptr[SKIP_GRAM_WINDOW_SIZE + i] = (*(pair->getRight()))[SKIP_GRAM_WINDOW_SIZE + i];
+            }            
         }
 
+        /*
+            Creating a Collective Object for Context Words:
+            --------------------------------------------------
+            Create a Collective object (context) to store the context words (ptr) with the appropriate dimensions.
+            The context object is used to compute the hidden layer vector (h) by averaging the embeddings of the context words.
+            The Collective is a container that holds the context words and their dimensions for further processing           
+         */    
         Collective<cc_tokenizer::string_character_traits<char>::size_type> context = Collective<cc_tokenizer::string_character_traits<char>::size_type>{ptr, DIMENSIONS{/*SKIP_GRAM_WINDOW_SIZE*2*/ n, 1, NULL, NULL}};
 
+         /*
+            Computing the Hidden Layer Vector (h):
+            -----------------------------------------
+            Computes the hidden layer vector h by averaging the embeddings of the context words.
+            The hidden layer vector h is used in both the forward and backward passes of the neural network             
+         */
          /*
             In the context of our CBOW, h refers to the hidden layer vector obtained by averaging the embeddings of the context words.
             It is used in both the forward and backward passes of the neural network.
@@ -984,6 +1008,7 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
             This involves accessing the embeddings for all context words and averaging them.
         */
         Collective<E> h = Numcy::mean(W1, context);
+        
         /*	
             Represents an intermediat gradient.	 
             This vector has shape (1, len(vocab)), similar to y_pred. 
@@ -1004,7 +1029,7 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
         */
         Collective<E> u = Numcy::dot(h, W2);
 
-         /*
+        /*
             y_pred is a Numcy array of predicted probabilities of the output word given the input context. 
             In our implementation, it is the output of the forward propagation step.
 
@@ -1014,7 +1039,7 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
         /*
             The resulting vector (u) is passed through a softmax function to obtain the predicted probabilities (y_pred). 
             The softmax function converts the raw scores into probabilities.
-        */
+         */
         Collective<E> y_pred = softmax<E>(u);
 
         return forward_propogation<E>{h, y_pred, u};

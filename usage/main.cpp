@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
     
     cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> data_parser(data);
     class Corpus vocab(data_parser);    
-    PAIRS pairs(vocab/*, arg_verbose.i ? true : false*/);
+    PAIRS pairs(vocab, arg_verbose.i ? true : false);
 
     /*
         For the neural network itself, Skip-gram typically uses a simple architecture. 

@@ -3,8 +3,6 @@
     Q@khaa.pk
  */
 
-// https://youtube.com/clip/UgkxOY6Uv_SIhahJIA0_WAjG5s-Uq9dPXoam?si=PPBjZOmndTI5I7sF
-
 #include <iostream>
 
 #ifndef WORD_EMBEDDING_ALGORITHMS_CBOW_USAGE_MAIN_HH
