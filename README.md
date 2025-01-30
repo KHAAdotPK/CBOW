@@ -32,9 +32,9 @@ The backward propagation function computes the gradients of the weights based on
 
 This implementation currently uses the full softmax for calculating output probabilities. While full softmax is effective, it can be computationally expensive for large vocabularies. Negative Sampling is a common technique used to optimize training in word embeddings, significantly reducing computational complexity.
 
-**Negative Sampling is currently under development**, and a comprehensive document detailing the approach and design is being created. You can follow the progress and access the document at [https://github.com/KHAAdotPK/CBOW/blob/main/DOCUMENTS/NegativeSampling.md](https://github.com/KHAAdotPK/CBOW/blob/main/DOCUMENTS/NegativeSampling.md). The document is mostly complete and outlines the core ideas and code strategies that will soon be implemented in this CBOW model to enhance training efficiency, especially for large-scale vocabularies.
+~~**Negative Sampling is currently under development**, and a comprehensive document detailing the approach and design is being created. You can follow the progress and access the document at [https://github.com/KHAAdotPK/CBOW/blob/main/DOCUMENTS/NegativeSampling.md](https://github.com/KHAAdotPK/CBOW/blob/main/DOCUMENTS/NegativeSampling.md). The document is mostly complete and outlines the core ideas and code strategies that will soon be implemented in this CBOW model to enhance training efficiency, especially for large-scale vocabularies.
 
-Future updates will include the ideas from this document, making the CBOW model faster and more scalable.
+Future updates will include the ideas from this document, making the CBOW model faster and more scalable.~~
 
 ### Training Loop:
 The CBOW training loop defines the main process for training the word embedding model using forward and backward propagation. Each epoch iterates through shuffled word pairs and updates the weights accordingly. Below is an outline of how the training loop works.
@@ -142,96 +142,6 @@ int main() {
     return 0;
 }
 ```
-
-### Training Output Summary
-
-The CBOW model was trained on INPUT.txt with the following parameters:
-
-- Learning Rate (lr): 0.0001
-- Epochs: 30
-- ~Regularization Strength (rs): 0.000001~
-- Verbose mode enabled
-
-#### Training Loss Progression
-
-The model's epoch loss decreased consistently over the 30 epochs, demonstrating that the model successfully minimized the objective function over time. Below is a summary of key observations:
-
-1. Initial Epochs: The training started with a loss of 12.7097 in the first epoch.
-
-2. Gradual Convergence: The model exhibited a steady decrease in epoch loss, with minor reductions in each epoch. By the 10th epoch, the loss had reduced to 12.5048.
-
-3. Final Epochs: After 30 epochs, the final epoch loss reached 12.0626, indicating gradual convergence toward a lower loss value.
-
-#### Key Insights:
-
-The consistent reduction in loss across epochs indicates that the model parameters were updated effectively under the specified learning rate. The small learning rate ~and regularization strength~ likely contributed to the model's stable and gradual convergence, helping prevent large oscillations in loss reduction.
-
-```BASH
-F:\CBOW\usage>.\cow.exe corpus ./INPUT.txt lr 0.0001 epoch 30 rs 0.000001 verbose
-Corpus: ./INPUT.txt
-Epoch# 1 of 30 epochs.
-epoch_loss = 12.7097
-Epoch# 2 of 30 epochs.
-epoch_loss = 12.6868
-Epoch# 3 of 30 epochs.
-epoch_loss = 12.6639
-Epoch# 4 of 30 epochs.
-epoch_loss = 12.641
-Epoch# 5 of 30 epochs.
-epoch_loss = 12.6182
-Epoch# 6 of 30 epochs.
-epoch_loss = 12.5955
-Epoch# 7 of 30 epochs.
-epoch_loss = 12.5727
-Epoch# 8 of 30 epochs.
-epoch_loss = 12.5501
-Epoch# 9 of 30 epochs.
-epoch_loss = 12.5274
-Epoch# 10 of 30 epochs.
-epoch_loss = 12.5048
-Epoch# 11 of 30 epochs.
-epoch_loss = 12.4823
-Epoch# 12 of 30 epochs.
-epoch_loss = 12.4598
-Epoch# 13 of 30 epochs.
-epoch_loss = 12.4374
-Epoch# 14 of 30 epochs.
-epoch_loss = 12.415
-Epoch# 15 of 30 epochs.
-epoch_loss = 12.3926
-Epoch# 16 of 30 epochs.
-epoch_loss = 12.3703
-Epoch# 17 of 30 epochs.
-epoch_loss = 12.348
-Epoch# 18 of 30 epochs.
-epoch_loss = 12.3258
-Epoch# 19 of 30 epochs.
-epoch_loss = 12.3036
-Epoch# 20 of 30 epochs.
-epoch_loss = 12.2815
-Epoch# 21 of 30 epochs.
-epoch_loss = 12.2594
-Epoch# 22 of 30 epochs.
-epoch_loss = 12.2373
-Epoch# 23 of 30 epochs.
-epoch_loss = 12.2153
-Epoch# 24 of 30 epochs.
-epoch_loss = 12.1934
-Epoch# 25 of 30 epochs.
-epoch_loss = 12.1715
-Epoch# 26 of 30 epochs.
-epoch_loss = 12.1496
-Epoch# 27 of 30 epochs.
-epoch_loss = 12.1278
-Epoch# 28 of 30 epochs.
-epoch_loss = 12.106
-Epoch# 29 of 30 epochs.
-epoch_loss = 12.0843
-Epoch# 30 of 30 epochs.
-epoch_loss = 12.0626
-Training done!
-```
-
 ### Contributing
 Contributions are welcome! Please feel free to submit a pull request or open an issue if you have any suggestions or bug reports.
 
