@@ -1101,18 +1101,16 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
     Collective<T> oneHot;
     /* The shape of grad_u is the same as y_pred (fp.predicted_probabilities) which is (1, len(vocab) without redundency) */
     Collective<T> grad_u;
+    /*          
+     */
+    Collective<T> grad_u_T;
     /*
         Dimensions of grad_u is (1, len(vocab) without redundency)
         Dimensions of fp.intermediate_activation (1, len(vocab) without redundency)
 
         Dimensions of grad_W2 is (len(vocab) without redundency, len(vocab) without redundency)        
      */
-    Collective<T> grad_W2;
-    /*
-        Dimensions of W2 is (SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, len(vocab) without redundency)
-        Dimensions of W2_T is (len(vocab) without redundency, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)        
-     */
-    Collective<T> W2_T;
+    Collective<T> grad_W2;    
     /*
        Dimensions of grad_u is (1, len(vocab) without redundency)
        Dimensions of W2_T is (len(vocab) without redundency, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)
@@ -1124,118 +1122,32 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         Dimensions of grad_W1 is (len(vocab) without redundency, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)
      */
     Collective<T> grad_W1;
-
-    Collective<T> context_ones;
-    Collective<T> outer_grad_h_context_ones;
-    Collective<T> transpose_outer_grad_h_context_ones;
-
+    
     /*
         Creating a One-Hot Vector, using Numcy::zeros with a shape of (1, vocab.numberOfUniqueTokens()).
         This creates a zero-filled column vector with a length equal to the vocabulary size
      */
     try 
-    {
+    {       
         oneHot = Numcy::zeros(DIMENSIONS{vocab.numberOfUniqueTokens(), 1, NULL, NULL});
-
-        /*
-            The following code block, iterates through the context word indices (left and right) from the pair object.
-            For each valid context word index (i), it sets the corresponding element in the oneHot vector to 1.
-            This effectively creates a one-hot encoded representation of the context words.
-         */
-        /*
-        for (int i = SKIP_GRAM_WINDOW_SIZE - 1; i >= 0; i--)
-        {       
-            if (((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
-            {
-                oneHot[(*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE] = 1;
-            }
-        }
-        for (int i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
-        {
-            if (((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
-            {
-                oneHot[(*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE] = 1;
-            }        
-        }
-         */
-
+ 
         oneHot[pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE] = 1;
 
         grad_u = Numcy::subtract<double>(fp.predicted_probabilities, oneHot);
 
-        W2_T = Numcy::transpose(W2);
-
-        grad_h = Numcy::dot(grad_u, W2_T);
-        
-        /*
-        std::cout<< " ---------------------------------- " << std::endl;
-        std::cout<< " Columns = " << fp.hidden_layer_vector.getShape().getNumberOfColumns() << std::endl;
-        std::cout<< " Rows    = " << fp.hidden_layer_vector.getShape().getDimensionsOfArray().getNumberOfInnerArrays() << std::endl;
-        std::cout<< " ----------------------------------- " << std::endl;
-        std::cout<< " Columns = " << grad_u.getShape().getNumberOfColumns() << std::endl;
-        std::cout<< " Rows    = " << grad_u.getShape().getDimensionsOfArray().getNumberOfInnerArrays() << std::endl;
-         */
         grad_W2 = Numcy::outer(fp.hidden_layer_vector, grad_u);
-        /*
-        std::cout<< " ----------------------------------- " << std::endl;
-        std::cout<< " Columns = " << grad_W2.getShape().getNumberOfColumns() << std::endl;
-        std::cout<< " Rows    = " << grad_W2.getShape().getDimensionsOfArray().getNumberOfInnerArrays() << std::endl;
-         */
-
-        //W2_T = Numcy::transpose(W2);
+        
+        grad_u_T = Numcy::transpose(grad_u);
+        
+        grad_h = Numcy::dot(W2, grad_u_T);
                 
-        //grad_h = Numcy::dot(grad_u, W2_T);
-
         grad_W1 = Numcy::zeros<T>(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
-
-        /*
-            Dimensions of grad_h is (1, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)
-            Dimensions of grad_W1 is (len(vocab) without redundency, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)
-         */
-        /*for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < grad_W1.getShape().getNumberOfColumns(); i++)
-        {
-            grad_W1[(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE)*SKIP_GRAM_EMBEDDNG_VECTOR_SIZE + i] += grad_h[i];
-        }*/
-
-        context_ones = Numcy::ones<T>(DIMENSIONS{SKIP_GRAM_WINDOW_SIZE*2, 1, NULL, NULL});
-        outer_grad_h_context_ones = Numcy::outer<T>(grad_h, context_ones);
-        transpose_outer_grad_h_context_ones = Numcy::transpose<T>(outer_grad_h_context_ones);
-
-        /*std::cout<< " ----------------------------------- " << std::endl;
-        std::cout<< " Columns = " << transpose_outer_grad_h_context_ones.getShape().getNumberOfColumns() << std::endl;
-        std::cout<< " Rows    = " << transpose_outer_grad_h_context_ones.getShape().getDimensionsOfArray().getNumberOfInnerArrays() << std::endl;
-        std::cout<< " ---------------------------------- " << std::endl;
-        std::cout<< " Columns = " << grad_W1.getShape().getNumberOfColumns() << std::endl;
-        std::cout<< " Rows    = " << grad_W1.getShape().getDimensionsOfArray().getNumberOfInnerArrays() << std::endl;*/
-
-        /*
-            The following code block, iterates through the context word indices (left and right) from the pair object.
-            For each valid context word index (i), it sets the corresponding element in the oneHot vector to 1.
-            This effectively creates a one-hot encoded representation of the context words.
-         */
-        /*
-        for (int i = SKIP_GRAM_WINDOW_SIZE - 1; i >= 0; i--)
-        {       
-            if (((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
-            {
-                oneHot[(*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE] = 1;
-            }
-        }
-        for (int i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
-        {
-            if (((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
-            {
-                oneHot[(*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE] = 1;
-            }        
-        }
-         */
-         
-        /*
+        
+       /*
             The following code block iterates through the context word indices (left and right) from the pair object.
             For each valid context word index (i), it adds the gradient values from transpose_outer_grad_h_context_ones to 
             the corresponding entries in grad_W1, updating the specific columns of the respective rows.
-         */
-
+        */
         // Iterate through the left context word indices in reverse order.
         for (int i = SKIP_GRAM_WINDOW_SIZE - 1; i >= 0; i--)
         {   
@@ -1243,10 +1155,10 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
             if (((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
             {
                 // Iterate through the columns of the gradient matrix.
-                for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < transpose_outer_grad_h_context_ones.getShape().getNumberOfColumns(); j++)
+                for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < grad_W1.getShape().getNumberOfColumns(); j++)
                 {
                     // Update the specific column of the specific row in grad_W1 by adding the corresponding value from transpose_outer_grad_h_context_ones.
-                    grad_W1[((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += transpose_outer_grad_h_context_ones[i*transpose_outer_grad_h_context_ones.getShape().getNumberOfColumns() + j];
+                    grad_W1[((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / SKIP_GRAM_WINDOW_SIZE);
                 }
             }
         }
@@ -1257,10 +1169,10 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
             if (((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
             {
                 // Iterate through the columns of the gradient matrix.
-                for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < transpose_outer_grad_h_context_ones.getShape().getNumberOfColumns(); j++)
+                for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < grad_W1.getShape().getNumberOfColumns(); j++)
                 {
                     // Update the specific column of the specific row in grad_W1 by adding the corresponding value from transpose_outer_grad_h_context_ones.
-                    grad_W1[((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += transpose_outer_grad_h_context_ones[(SKIP_GRAM_WINDOW_SIZE + i)*transpose_outer_grad_h_context_ones.getShape().getNumberOfColumns() + j];
+                    grad_W1[((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / SKIP_GRAM_WINDOW_SIZE);
                 }
             } 
         }
@@ -1321,33 +1233,16 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
             WORDPAIRS_PTR pair = pairs.get_current_word_pair();\
-            cc_tokenizer::string_character_traits<char>::size_type* negative_samples_ptr = generateNegativeSamples_cbow(vocab, pair, static_cast<cc_tokenizer::string_character_traits<char>::size_type>(CBOW_NEGAIVE_SAMPLE_SIZE));\
-            /* Reshape and Update W2: Creates a temporary variable W2_reshaped of type Collective<t> to hold the reshaped\
-               output weights held by W2. We need reshaped W2 vector for the later substraction operation between W2 vector\
-               and the other one */\
-            Collective<t> W2_reshaped;\
             try\
             {\
                 forward_propogation<t> fp = forward (W1, W2, vocab, pair);\
                 backward_propogation<t> bp = backward (W1, W2, vocab, fp, pair);\
                 /* Update weights */\
-                /* Reshape W2 so tht it has the same shape as the other vector.\
-                   Function reshape works when first vector is smaller in shape than the other vector */\
-                W2_reshaped = Numcy::reshape(W2, bp.grad_weights_hidden_to_output);\
                 W1 -= bp.grad_weights_input_to_hidden * lr;\
-                W2_reshaped -= bp.grad_weights_hidden_to_output * lr;\
-                /* Update W2 */\
-                for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < W2.getShape().getDimensionsOfArray().getNumberOfInnerArrays(); i++)\
-                {\
-                    for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < W2.getShape().getNumberOfColumns(); j++)\
-                    {\
-                        W2[i*W2.getShape().getNumberOfColumns() + j] = W2_reshaped[i*W2_reshaped.getShape().getNumberOfColumns() + j];\
-                    }\
-                }\
+                W2 -= bp.grad_weights_hidden_to_output * lr;\
                 /* Loss Function: The CBOW model typically uses negative log-likelihood (NLL) as the loss function.\
                    In NLL, lower values indicate better performance. */\
                 el = el + (-1*log(fp.pb(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE)));\
-                cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().deallocate(negative_samples_ptr);\
             }\
             catch (ala_exception& e)\
             {\

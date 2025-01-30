@@ -4,6 +4,7 @@
 ::  - "verbose": Enables verbose output
 ::  - "e [number]": Sets the number of epochs (default is 1)
 ::  - "w1 [filename]": Specifies the path to the weights file
+::  - "lr [number]": Sets the learning rate (default is 0.09)
 ::
 :: The script loops through arguments using SHIFT and handles each 
 :: option accordingly.
@@ -17,6 +18,7 @@ setlocal enabledelayedexpansion
 set verbose_option=
 set w1_filename_option="./data/weights/w1p.dat"
 set epochs_option=1
+set learning_rate_option=0.09
 
 :start_parsing_args
 
@@ -38,11 +40,18 @@ if "%1"=="verbose" (
     )
     shift
     goto :start_parsing_args
+) else if "%1"=="lr" (
+    if "%2" neq "" (
+        set learning_rate_option=%2
+        shift
+    )
+    shift
+    goto :start_parsing_args
 ) else if "%1"=="build" (
     goto :build
-) 
+)  
 
-@ .\cow.exe corpus ./../NEW-INPUT.txt lr 0.0001 epoch %epochs_option% rs 0.000001 verbose
+@ .\cow.exe corpus ./../NEW-INPUT.txt lr %learning_rate_option% epoch %epochs_option% rs 0.000001 %verbose_option%
 
 goto :eof
 
