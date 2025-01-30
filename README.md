@@ -32,9 +32,9 @@ The backward propagation function computes the gradients of the weights based on
 
 This implementation currently uses the full softmax for calculating output probabilities. While full softmax is effective, it can be computationally expensive for large vocabularies. Negative Sampling is a common technique used to optimize training in word embeddings, significantly reducing computational complexity.
 
-~~**Negative Sampling is currently under development**, and a comprehensive document detailing the approach and design is being created. You can follow the progress and access the document at [https://github.com/KHAAdotPK/CBOW/blob/main/DOCUMENTS/NegativeSampling.md](https://github.com/KHAAdotPK/CBOW/blob/main/DOCUMENTS/NegativeSampling.md). The document is mostly complete and outlines the core ideas and code strategies that will soon be implemented in this CBOW model to enhance training efficiency, especially for large-scale vocabularies.
+~~**Negative Sampling is currently under development**, and a comprehensive document detailing the approach and design is being created. You can follow the progress and access the document at [https://github.com/KHAAdotPK/CBOW/blob/main/DOCUMENTS/NegativeSampling.md](https://github.com/KHAAdotPK/CBOW/blob/main/DOCUMENTS/NegativeSampling.md). The document is mostly complete and outlines the core ideas and code strategies that will soon be implemented in this CBOW model to enhance training efficiency, especially for large-scale vocabularies.~~
 
-Future updates will include the ideas from this document, making the CBOW model faster and more scalable.~~
+~~Future updates will include the ideas from this document, making the CBOW model faster and more scalable.~~
 
 ### Training Loop:
 The CBOW training loop defines the main process for training the word embedding model using forward and backward propagation. Each epoch iterates through shuffled word pairs and updates the weights accordingly. Below is an outline of how the training loop works.
