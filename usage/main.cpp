@@ -169,8 +169,8 @@ int main(int argc, char* argv[])
 
     try 
     {
-        W1 = Numcy::Random::randn(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
-        W2 = Numcy::Random::randn(DIMENSIONS{vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, NULL, NULL});
+        W1 = Numcy::Random::randn(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfTokens(), NULL, NULL});
+        W2 = Numcy::Random::randn(DIMENSIONS{vocab.numberOfTokens(), SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, NULL, NULL});
     }
     catch (ala_exception& e)
     {

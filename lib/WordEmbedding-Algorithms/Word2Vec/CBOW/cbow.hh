@@ -1124,12 +1124,12 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
     Collective<T> grad_W1;
     
     /*
-        Creating a One-Hot Vector, using Numcy::zeros with a shape of (1, vocab.numberOfUniqueTokens()).
+        Creating a One-Hot Vector, using Numcy::zeros with a shape of (1, vocab.numberOfTokens()).
         This creates a zero-filled column vector with a length equal to the vocabulary size
      */
     try 
     {       
-        oneHot = Numcy::zeros(DIMENSIONS{vocab.numberOfUniqueTokens(), 1, NULL, NULL});
+        oneHot = Numcy::zeros(DIMENSIONS{vocab.numberOfTokens(), 1, NULL, NULL});
  
         oneHot[pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE] = 1;
 
@@ -1141,7 +1141,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         
         grad_h = Numcy::dot(W2, grad_u_T);
                 
-        grad_W1 = Numcy::zeros<T>(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
+        grad_W1 = Numcy::zeros<T>(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfTokens(), NULL, NULL});
         
        /*
             The following code block iterates through the context word indices (left and right) from the pair object.
@@ -1152,7 +1152,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         for (int i = SKIP_GRAM_WINDOW_SIZE - 1; i >= 0; i--)
         {   
             // Check if the current left context word index is within the valid range of unique tokens in the vocabulary.
-            if (((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
+            if (((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfTokens())
             {
                 // Iterate through the columns of the gradient matrix.
                 for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < grad_W1.getShape().getNumberOfColumns(); j++)
@@ -1166,7 +1166,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         for (int i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
         {
             // Check if the current right context word index is within the valid range of unique tokens in the vocabulary.
-            if (((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
+            if (((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfTokens())
             {
                 // Iterate through the columns of the gradient matrix.
                 for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < grad_W1.getShape().getNumberOfColumns(); j++)
