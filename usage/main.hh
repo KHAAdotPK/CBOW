@@ -35,12 +35,12 @@
 
 #include "../lib/WordEmbedding-Algorithms/Word2Vec/CBOW/header.hh"
 
-#define COMMAND "h -h help --help ? /? (Displays help screen)\n\
-v -v version --version /v (Displays version number)\n\
-e epoch --epoch /e (Sets epoch or number of times the training loop would run)\n\
-corpus --corpus (Path to the file which has the training data)\n\
-verbose --verbose (Display of output, verbosly)\n\
-lr --lr learningrate (Learning rate)\n\
-rs --rs (Regularization strength)\n"
+#define COMMAND "h -h help --help ? /? (Displays the help screen, listing available commands and their descriptions.)\n\
+v -v version --version /v (Shows the current version of the software.)\n\
+e epoch --epoch /e (Sets the epoch count, determining the number of iterations for the training loop.)\n\
+corpus --corpus (Path to the file which has the training data.)\n\
+verbose --verbose (Enables detailed output for each operation during execution.)\n\
+lr --lr learningrate (Defines the learning rate parameter to control the rate of convergence.)\n\
+rs --rs (Sets the regularization strength, used to prevent overfitting.)\n"
 
 #endif
