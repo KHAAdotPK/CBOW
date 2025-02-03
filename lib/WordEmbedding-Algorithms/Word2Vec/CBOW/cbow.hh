@@ -752,7 +752,7 @@ template <typename E = cc_tokenizer::string_character_traits<char>::size_type>
 E* generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = CBOW_NEGAIVE_SAMPLE_SIZE) throw (ala_exception)
 {    
     E lowerbound = 0 + INDEX_ORIGINATES_AT_VALUE;
-    E higherbound = vocab.numberOfTokens() + INDEX_ORIGINATES_AT_VALUE - 1;
+    E higherbound = vocab.numberOfUniqueTokens() + INDEX_ORIGINATES_AT_VALUE - 1;
     /*    
         For documentation purposes. 
         Ensure valid distribution bounds, we know our bounds can't generate negative random numbers
@@ -1124,12 +1124,12 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
     Collective<T> grad_W1;
     
     /*
-        Creating a One-Hot Vector, using Numcy::zeros with a shape of (1, vocab.numberOfTokens()).
+        Creating a One-Hot Vector, using Numcy::zeros with a shape of (1, vocab.numberOfUniqueTokens()).
         This creates a zero-filled column vector with a length equal to the vocabulary size
      */
     try 
     {       
-        oneHot = Numcy::zeros(DIMENSIONS{vocab.numberOfTokens(), 1, NULL, NULL});
+        oneHot = Numcy::zeros(DIMENSIONS{vocab.numberOfUniqueTokens(), 1, NULL, NULL});
  
         oneHot[pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE] = 1;
 
@@ -1141,7 +1141,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         
         grad_h = Numcy::dot(W2, grad_u_T);
                 
-        grad_W1 = Numcy::zeros<T>(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfTokens(), NULL, NULL});
+        grad_W1 = Numcy::zeros<T>(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
         
        /*
             The following code block iterates through the context word indices (left and right) from the pair object.
@@ -1152,7 +1152,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         for (int i = SKIP_GRAM_WINDOW_SIZE - 1; i >= 0; i--)
         {   
             // Check if the current left context word index is within the valid range of unique tokens in the vocabulary.
-            if (((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfTokens())
+            if (((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
             {
                 // Iterate through the columns of the gradient matrix.
                 for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < grad_W1.getShape().getNumberOfColumns(); j++)
@@ -1166,7 +1166,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         for (int i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
         {
             // Check if the current right context word index is within the valid range of unique tokens in the vocabulary.
-            if (((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfTokens())
+            if (((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
             {
                 // Iterate through the columns of the gradient matrix.
                 for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < grad_W1.getShape().getNumberOfColumns(); j++)
@@ -1198,7 +1198,10 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  *
  * @param lr: (Type: float or double)
  *      The learning rate for the model. This controls the step size during weight updates and determines how much the model should adjust its weights at each step.
- *
+ * 
+ * @param rs (Type: float or double)
+ *      The regularization strength for the model. This parameter helps prevent overfitting by penalizing large weights in the model.
+ * 
  * @param pairs: (Type: PAIRS or similar data structure)
  *      The training data, which contains word pairs. Each pair consists of a center word and its surrounding context words. The model learns to predict the center word from its context.
  *
@@ -1217,7 +1220,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  * @param W2: (Type: Collective<t>)
  *      The hidden-to-output weight matrix. This matrix is used to predict the center word from the context word embeddings and is also updated during training.
  */
-#define CBOW_TRAINING_LOOP(el, epoch, lr, pairs, t, verbose, vocab, W1, W2)\
+#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, pairs, t, verbose, vocab, W1, W2)\
 {\
     /* Epoch loop */\
     for (cc_tokenizer::string_character_traits<char>::size_type i = 1; i <= epoch; i++)\
@@ -1237,9 +1240,38 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
             {\
                 forward_propogation<t> fp = forward (W1, W2, vocab, pair);\
                 backward_propogation<t> bp = backward (W1, W2, vocab, fp, pair);\
-                /* Update weights */\
-                W1 -= bp.grad_weights_input_to_hidden * lr;\
-                W2 -= bp.grad_weights_hidden_to_output * lr;\
+                /* Relationship Between Learning Rate (lr) and Regularization Strength (rs) */\
+                /* ------------------------------------------------------------------------ */\
+                /* - High learning rate (lr): */\
+                /*   - Often requires higher regularization strength (rs) to prevent overfitting or unstable updates. */\
+                /*   - Large parameter updates can cause the model to overshoot the optimal solution or overfit. */\
+                /*   - Increasing rs penalizes large weights, stabilizing training and reducing overfitting. */\
+                /*  */\
+                /* - Low learning rate (lr): */\
+                /*   - Allows for lower or no regularization strength (rs) since smaller updates reduce overfitting risk. */\
+                /*   - The model converges more slowly, and heavy regularization may unnecessarily slow training. */\
+                /*  */\
+                /* L2 Regularization (Weight Decay) */\
+                /* -------------------------------- */\
+                /* - Regularization strength (rs) controls the penalty applied to large weights. */\
+                /* - During weight updates, the gradient is adjusted by adding the regularization term (W1 * rs or W2 * rs). */\
+                /* - This penalizes large weights, helping to prevent overfitting. */\
+                /* - Key Considerations: */\
+                /*   - Avoid setting rs too high, as it may excessively penalize weights and slow convergence. */\
+                /*   - Balance rs and lr to achieve stable training and good generalization. */\
+                /*   - Adjust rs based on the learning rate (lr) to balance regularization and training speed. */\
+                if (rs == 0)\
+                {\
+                    /* Update weights without regularization strength */\
+                    W1 -= bp.grad_weights_input_to_hidden * lr;\
+                    W2 -= bp.grad_weights_hidden_to_output * lr;\
+                }\
+                else\
+                {\
+                    /* Update weights with regulariztion strength */\
+                    W1 -= ((bp.grad_weights_input_to_hidden + (W1 * rs)) * lr);\
+                    W2 -= ((bp.grad_weights_hidden_to_output + (W2 * rs)) * lr);\
+                }\
                 /* Loss Function: The CBOW model typically uses negative log-likelihood (NLL) as the loss function.\
                    In NLL, lower values indicate better performance. */\
                 el = el + (-1*log(fp.pb(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE)));\

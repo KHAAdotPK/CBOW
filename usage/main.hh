@@ -32,6 +32,7 @@
 #include "../lib/argsv-cpp/lib/parser/parser.hh"
 #include "../lib/sundry/cooked_read_new.hh"
 #include "../lib/sundry/cooked_write_new.hh"
+#include "../lib/read_write_weights/header.hh"
 
 #include "../lib/WordEmbedding-Algorithms/Word2Vec/CBOW/header.hh"
 
@@ -41,6 +42,10 @@ e epoch --epoch /e (Sets the epoch count, determining the number of iterations f
 corpus --corpus (Path to the file which has the training data.)\n\
 verbose --verbose (Enables detailed output for each operation during execution.)\n\
 lr --lr learningrate (Defines the learning rate parameter to control the rate of convergence.)\n\
+w1 --w1 (Specifies the file containing the trained input weights.)\n\
+w2 --w2 (Specifies the file containing the trained output weights.)\n\
+input --input (Specifies the filenames to retrieve the partially input trained weights during training.)\n\
+output --output (Specifies the filenames to store the output trained weights after completion of training.)\n\
 rs --rs (Sets the regularization strength, used to prevent overfitting.)\n"
 
 #endif

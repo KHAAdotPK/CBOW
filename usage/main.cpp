@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[])
 { 
-    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose;
+    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output;
     cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> argsv_parser(cc_tokenizer::String<char>(COMMAND));
     
     cc_tokenizer::String<char> data;
@@ -33,6 +33,10 @@ int main(int argc, char* argv[])
     FIND_ARG(argv, argc, argsv_parser, "corpus", arg_corpus);
     FIND_ARG(argv, argc, argsv_parser, "lr", arg_lr);
     FIND_ARG(argv, argc, argsv_parser, "rs", arg_rs);
+    FIND_ARG(argv, argc, argsv_parser, "w1", arg_w1);
+    FIND_ARG(argv, argc, argsv_parser, "w2", arg_w2);
+    FIND_ARG(argv, argc, argsv_parser, "input", arg_input);
+    FIND_ARG(argv, argc, argsv_parser, "output", arg_output);
 
     if (arg_corpus.i)
     {
@@ -129,6 +133,31 @@ int main(int argc, char* argv[])
             default_rs = atof(argv[arg_rs.j]);
         }
     }
+
+    if (arg_w1.i || arg_w2.i) 
+    {
+        FIND_ARG_BLOCK(argv, argc, argsv_parser, arg_w1);
+
+        if (!arg_w1.argc)
+        {
+            ARG arg_w1_help;
+            HELP(argsv_parser, arg_w1_help, "--w1");                
+            HELP_DUMP(argsv_parser, arg_w1_help); 
+
+            return 0;
+        }
+
+        FIND_ARG_BLOCK(argv, argc, argsv_parser, arg_w2);
+
+        if (!arg_w2.argc)
+        {
+            ARG arg_w2_help;
+            HELP(argsv_parser, arg_w2_help, "w2");                
+            HELP_DUMP(argsv_parser, arg_w2_help); 
+
+            return 0;
+        }
+    }
     
     cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> data_parser(data);
     class Corpus vocab(data_parser);    
@@ -169,12 +198,23 @@ int main(int argc, char* argv[])
 
     try 
     {
-        W1 = Numcy::Random::randn(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfTokens(), NULL, NULL});
-        W2 = Numcy::Random::randn(DIMENSIONS{vocab.numberOfTokens(), SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, NULL, NULL});
+        if (!arg_input.i)
+        {
+            W1 = Numcy::Random::randn(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
+            W2 = Numcy::Random::randn(DIMENSIONS{vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, NULL, NULL});
+        }
+        else
+        {
+            W1 = Collective<double>{NULL, DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL}};
+            W2 = Collective<double>{NULL, DIMENSIONS{vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, NULL, NULL}};
+
+            READ_W_BIN(W1, argv[arg_w1.i + 1], double);
+            READ_W_BIN(W2, argv[arg_w2.i + 1], double);
+        }
     }
     catch (ala_exception& e)
     {
-        std::cout<< e.what() << std::endl;
+        std::cout<< "main() -> " << e.what() << std::endl;
     }
 
     double epoch_loss = 0.0;
@@ -182,6 +222,12 @@ int main(int argc, char* argv[])
     CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, pairs, double, arg_verbose.i ? true : false, vocab, W1, W2);
 
     std::cout<< "Training done!" << std::endl;
+
+    if (arg_output.i)
+    {
+        WRITE_W_BIN(W1, argv[arg_w1.i + 1], double);
+        WRITE_W_BIN(W2, argv[arg_w2.i + 1], double);
+    }
                 
     return 0;
 }
