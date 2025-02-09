@@ -98,14 +98,58 @@ cd lib
     ```bash
     cd CBOW
     cd usage
-    ./BUILD.cmd    
+    ./RUN.cmd build   
     ```
 4. Run the training program with your dataset:
     ```bash
     cd CBOW
     cd usage
-    ./RUN.cmd
+    ./RUN.cmd corpus data/NEW-INPUT.txt lr 0.009 rs 0 e 10 w1 w1p.dat w2 w2p.dat output
+    ./RUN.cmd corpus data/NEW-INPUT.txt lr 0.009 rs 0 e 10 w1 w1p.dat w2 w2p.dat input output
     ```
+
+### Command Line Options Reference
+# Command Line Options
+
+This section lists the available command line options for the software, along with their descriptions.
+
+- **`h`, `-h`, `help`, `--help`, `?`, `/?`**  
+  Displays the help screen, listing available commands and their descriptions.
+
+- **`v`, `-v`, `version`, `--version`, `/v`**  
+  Shows the current version of the software.
+
+- **`e`, `epoch`, `--epoch`, `/e`**  
+  Sets the epoch count, determining the number of iterations for the training loop.
+
+- **`corpus`, `--corpus`**  
+  Path to the file which has the training data.
+
+- **`verbose`, `--verbose`**  
+  Enables detailed output for each operation during execution.
+
+- **`lr`, `--lr`, `learningrate`**  
+  Defines the learning rate parameter to control the rate of convergence.
+
+- **`w1`, `--w1`**  
+  Specifies the file containing the trained input weights.
+
+- **`w2`, `--w2`**  
+  Specifies the file containing the trained output weights.
+
+- **`input`, `--input`**  
+  Specifies the filenames to retrieve the partially input trained weights during training.
+
+- **`output`, `--output`**  
+  Specifies the filenames to store the output trained weights after completion of training.
+
+- **`rs`, `--rs`**  
+  Sets the regularization strength, used to prevent overfitting.
+
+---
+
+For more details, refer to the software documentation or use the `--help` command.
+
 
 #### Example of skeleton training program.
 ##### Parameters
