@@ -220,7 +220,7 @@ int main(int argc, char* argv[])
     double epoch_loss = 0.0;
                      
     CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, pairs, double, arg_verbose.i ? true : false, vocab, W1, W2);
-
+    
     std::cout<< "Training done!" << std::endl;
 
     if (arg_output.i)

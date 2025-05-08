@@ -1095,6 +1095,106 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
 }
 
 template <typename T = double>
+backward_propogation<T> backward_new(Collective<T>& W1, Collective<T>& W2, CORPUS_REF vocab, forward_propogation<T>& fp, WORDPAIRS_PTR pair, bool verbose = false) throw (ala_exception)
+{
+        /* The hot one array is row vector, and has shape (1, vocab.len = REPLIKA_VOCABULARY_LENGTH a.k.a no redundency) */
+        Collective<T> oneHot;
+        /* The shape of grad_u is the same as y_pred (fp.predicted_probabilities) which is (1, len(vocab) without redundency) */
+        Collective<T> grad_u;
+        /*          
+         */
+        Collective<T> grad_u_T;
+        /*
+            Dimensions of grad_u is (1, len(vocab) without redundency)
+            Dimensions of fp.intermediate_activation (1, len(vocab) without redundency)
+    
+            Dimensions of grad_W2 is (len(vocab) without redundency, len(vocab) without redundency)        
+         */
+        Collective<T> grad_W2;    
+        /*
+           Dimensions of grad_u is (1, len(vocab) without redundency)
+           Dimensions of W2_T is (len(vocab) without redundency, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)
+    
+           Dimensions of grad_h is (1, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)
+         */
+        Collective<T> grad_h;
+        /*
+            Dimensions of grad_W1 is (len(vocab) without redundency, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)
+         */
+        Collective<T> grad_W1;
+        
+        /*
+            Creating a One-Hot Vector, using Numcy::zeros with a shape of (1, vocab.numberOfUniqueTokens()).
+            This creates a zero-filled column vector with a length equal to the vocabulary size
+         */
+        try 
+        {
+            oneHot = Numcy::zeros(DIMENSIONS{vocab.numberOfUniqueTokens(), 1, NULL, NULL});
+
+            oneHot[pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE] = 1; 
+
+            grad_u = Numcy::subtract<double>(fp.predicted_probabilities, oneHot);
+            
+            grad_W2 = Numcy::outer(fp.hidden_layer_vector, grad_u);
+
+            grad_u_T = Numcy::transpose(grad_u);
+
+            grad_h = Numcy::dot(W2, grad_u_T);
+
+            grad_W1 = Numcy::zeros<T>(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL}); 
+
+            // Iterate through the left context word indices in reverse order.
+            for (int i = SKIP_GRAM_WINDOW_SIZE - 1; i >= 0; i--)
+            {   
+                // Check if the current left context word index is within the valid range of unique tokens in the vocabulary.
+                if (((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
+                {
+                    // Iterate through the columns of the gradient matrix.
+                    for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < grad_W1.getShape().getNumberOfColumns(); j++)
+                    {
+                        // Update the specific column of the specific row in grad_W1 by adding the corresponding value from transpose_outer_grad_h_context_ones.
+                        grad_W1[((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / SKIP_GRAM_WINDOW_SIZE);
+                    }
+                }
+            }
+
+            // Iterate through the right context word indices in order.
+            for (int i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
+            {
+                // Check if the current right context word index is within the valid range of unique tokens in the vocabulary.
+                if (((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE) < vocab.numberOfUniqueTokens())
+                {
+                    // Iterate through the columns of the gradient matrix.
+                    for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < grad_W1.getShape().getNumberOfColumns(); j++)
+                    {
+                        // Update the specific column of the specific row in grad_W1 by adding the corresponding value from transpose_outer_grad_h_context_ones.
+                        grad_W1[((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / SKIP_GRAM_WINDOW_SIZE);
+                    }
+                } 
+            }                
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("backward() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        
+        /*
+            Dimensions of grad_W1 is (len(vocab) without redundency, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)
+            Dimensions of grad_W2 is (len(vocab) without redundency, len(vocab) without redundency)
+        */ 
+       
+        //backward_propogation<T> ret = backward_propogation<T>{grad_W1, grad_W2, Collective<T>{NULL, DIMENSIONS{0, 0, NULL, NULL}}};
+        //return backward_propogation<T>{grad_W1, grad_W2, Collective<T>{NULL, DIMENSIONS{0, 0, NULL, NULL}}};
+        DIMENSIONS dim = DIMENSIONS{0, 0, NULL, NULL};
+        Collective<T> foo = Collective<T>{NULL, dim.copy()};
+        //return ret;  
+        
+        backward_propogation<T> ret = backward_propogation<T>{grad_W1, grad_W2, foo};
+
+        return ret;
+}
+
+template <typename T = double>
 backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_REF vocab, forward_propogation<T>& fp, WORDPAIRS_PTR pair, bool verbose = false) throw (ala_exception)
 {
     /* The hot one array is row vector, and has shape (1, vocab.len = REPLIKA_VOCABULARY_LENGTH a.k.a no redundency) */
@@ -1128,7 +1228,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         This creates a zero-filled column vector with a length equal to the vocabulary size
      */
     try 
-    {       
+    {                    
         oneHot = Numcy::zeros(DIMENSIONS{vocab.numberOfUniqueTokens(), 1, NULL, NULL});
  
         oneHot[pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE] = 1;
@@ -1175,7 +1275,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                     grad_W1[((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / SKIP_GRAM_WINDOW_SIZE);
                 }
             } 
-        }
+        }       
     }
     catch (ala_exception& e)
     {
@@ -1186,7 +1286,12 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         Dimensions of grad_W1 is (len(vocab) without redundency, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)
         Dimensions of grad_W2 is (len(vocab) without redundency, len(vocab) without redundency)
      */ 
-    return backward_propogation<T>{grad_W1, grad_W2, Collective<T>{NULL, DIMENSIONS{0, 0, NULL, NULL}}};
+    
+    DIMENSIONS temp1 = DIMENSIONS{0, 0, NULL, NULL};
+    Collective<T> temp2 = Collective<T>{NULL, temp1.copy()};       
+    backward_propogation<T> ret = backward_propogation<T>{grad_W1, grad_W2, temp2};
+
+    return ret;
 }
 
 /**
@@ -1269,8 +1374,14 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                 else\
                 {\
                     /* Update weights with regulariztion strength */\
-                    W1 -= ((bp.grad_weights_input_to_hidden + (W1 * rs)) * lr);\
-                    W2 -= ((bp.grad_weights_hidden_to_output + (W2 * rs)) * lr);\
+                    /*W1 -= ((bp.grad_weights_input_to_hidden + (W1 * rs)) * lr);*/\
+                    /*W2 -= ((bp.grad_weights_hidden_to_output + (W2 * rs)) * lr);*/\
+                    \
+                    /* Update weights with regulariztion strength */\
+                    Collective<t> rs_W1 = W1 * rs;\
+                    Collective<t> rs_W2 = W2 * rs;\
+                    W1 -= ((bp.grad_weights_input_to_hidden + rs_W1/*(W1 * rs)*/) * lr);\
+                    W2 -= ((bp.grad_weights_hidden_to_output + rs_W2 /*(W2 * rs)*/) * lr);\
                 }\
                 /* Loss Function: The CBOW model typically uses negative log-likelihood (NLL) as the loss function.\
                    In NLL, lower values indicate better performance. */\

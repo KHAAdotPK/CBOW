@@ -5,6 +5,11 @@
 
 #include <iostream>
 
+#include "../lib/argsv-cpp/lib/parser/parser.hh"
+#include "../lib/sundry/cooked_read_new.hh"
+#include "../lib/sundry/cooked_write_new.hh"
+#include "../lib/read_write_weights/header.hh"
+
 #ifndef WORD_EMBEDDING_ALGORITHMS_CBOW_USAGE_MAIN_HH
 #define WORD_EMBEDDING_ALGORITHMS_CBOW_USAGE_MAIN_HH
 
@@ -28,11 +33,6 @@
 #define GRAMMAR_END_OF_TOKEN_MARKER ' '
 #define GRAMMAR_END_OF_LINE_MARKER '\n'
 #define GRAMMAR_START_OF_COMMENT_MARKER '('
-
-#include "../lib/argsv-cpp/lib/parser/parser.hh"
-#include "../lib/sundry/cooked_read_new.hh"
-#include "../lib/sundry/cooked_write_new.hh"
-#include "../lib/read_write_weights/header.hh"
 
 #include "../lib/WordEmbedding-Algorithms/Word2Vec/CBOW/header.hh"
 
