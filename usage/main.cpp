@@ -191,30 +191,32 @@ int main(int argc, char* argv[])
           - The embedding vector of the central word (from W1) is multiplied by W2 to get a score for each context word.
 
         * By predicting surrounding context words based on the central word's embedding, Skip-gram learns to capture semantic relationships between words with similar contexts.
-     */
+     */    
+    Collective<double> W1;    
+    Collective<double> W2;    
     
-    Collective<double> W1;
-    Collective<double> W2;
-
     try 
-    {
+    {        
         if (!arg_input.i)
-        {
-            W1 = Numcy::Random::randn(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
-            W2 = Numcy::Random::randn(DIMENSIONS{vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, NULL, NULL});
+        {                        
+            W1 = Numcy::Random::randn(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});            
+            W2 = Numcy::Random::randn(DIMENSIONS{vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, NULL, NULL});         
         }
         else
         {
             W1 = Collective<double>{NULL, DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL}};
             W2 = Collective<double>{NULL, DIMENSIONS{vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, NULL, NULL}};
 
-            READ_W_BIN(W1, argv[arg_w1.i + 1], double);
-            READ_W_BIN(W2, argv[arg_w2.i + 1], double);
+            //READ_W_BIN(W1, argv[arg_w1.i + 1], double);
+            //READ_W_BIN(W2, argv[arg_w2.i + 1], double);
         }
     }
     catch (ala_exception& e)
     {
+        // System should terminate immediately
         std::cout<< "main() -> " << e.what() << std::endl;
+
+        return 0;
     }
 
     double epoch_loss = 0.0;

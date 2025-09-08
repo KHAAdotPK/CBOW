@@ -16,6 +16,7 @@
 :: Delayed expansion is enabled to support dynamic variable updates
 :: if needed in future modifications.
 :: ------------------------------------------------------------------------
+:: set corpus_filename_option="./data/NEW-INPUT.txt"
 
 @echo off
 setlocal enabledelayedexpansion
@@ -23,12 +24,13 @@ setlocal enabledelayedexpansion
 set verbose_option=
 set w1_filename_option="./data/weights/w1p.dat"
 set w2_filename_option="./data/weights/w2p.dat"
-set corpus_filename_option="./data/NEW-INPUT.txt"
+set corpus_filename_option="./data/adult_abdominal_pain_input.txt"
 set epochs_option=1
 set learning_rate_option=0.09
 set regularization_strength_option=0.000000
 set input_option=
 set output_option=
+set cbow_debug_forward_pair="CbowDebugForwardPair=no"
 
 :start_parsing_args
 
@@ -94,6 +96,11 @@ if "%1"=="verbose" (
     shift    
     goto :start_parsing_args    
 ) else if "%1"=="build" (
+    if "%2" neq "" ( 
+        if "%2"=="debug_forward_pair" (            
+            set cbow_debug_forward_pair="CBOW_DEBUG_PAIR"            
+        )
+    )
     goto :build
 )  
 
@@ -102,7 +109,7 @@ if "%1"=="verbose" (
 goto :eof
 
 :build
-@  cl main.cpp /EHsc /Fecow.exe
+@  cl main.cpp /EHsc /Fecow.exe /D %cbow_debug_forward_pair%
 
 :eof
 

@@ -60,7 +60,7 @@ struct forward_propogation
         {
             throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
         }
-        hidden_layer_vector = Collective<E>{ptr, h.getShape().copy()};
+        hidden_layer_vector = Collective<E>{ptr, h.getShape()/*.copy()*/};
 
         try
         {                 
@@ -82,7 +82,7 @@ struct forward_propogation
         {
             throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
         }
-        predicted_probabilities = Collective<E>{ptr, y_pred.getShape().copy()};
+        predicted_probabilities = Collective<E>{ptr, y_pred.getShape()/*.copy()*/};
 
         try
         {        
@@ -104,7 +104,7 @@ struct forward_propogation
         {
             throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
         }
-        intermediate_activation = Collective<E>{ptr, u.getShape().copy()};
+        intermediate_activation = Collective<E>{ptr, u.getShape()/*.copy()*/};
     }
 
     forward_propogation<E>(forward_propogation<E>& other) 
@@ -374,6 +374,85 @@ struct backward_propogation
         
     }
 
+    backward_propogation(Collective<E>& grad_W1, Collective<E>& grad_W2) /*: grad_weights_input_to_hidden(grad_W1), grad_weights_hidden_to_output(grad_W2), grad_hidden_with_respect_to_center_word(Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}})*/
+    {
+        E* ptr = NULL;
+
+        try 
+        {                    
+            ptr = cc_tokenizer::allocator<E>().allocate(grad_W1.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < grad_W1.getShape().getN(); i++)
+            {
+                ptr[i] = grad_W1[i];                
+            }
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+           throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        grad_weights_input_to_hidden = Collective<E>{ptr, grad_W1.getShape()/*.copy()*/};
+
+        try 
+        {                    
+            ptr = cc_tokenizer::allocator<E>().allocate(grad_W2.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < grad_W2.getShape().getN(); i++)
+            {
+                ptr[i] = grad_W2[i];                
+            }
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+           throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        grad_weights_hidden_to_output = Collective<E>{ptr, grad_W2.getShape()/*.copy()*/};
+
+        //grad_hidden_with_respect_to_center_word = Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}};
+
+        /*try 
+        {                    
+            ptr = cc_tokenizer::allocator<E>().allocate(grad_center_word.getShape().getN());
+            
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < grad_center_word.getShape().getN(); i++)
+            {
+                ptr[i] = grad_center_word[i];                
+            }
+        }
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+           throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }
+        std::cout<< "SONI-> problem area..." << grad_center_word.getShape().getN() << std::endl;
+        if (grad_center_word.getShape().getN() > 0)
+        {
+            std::cout<< "----------------------------------------->>>>>>>> SONI-> problem area..." << grad_center_word.getShape().getN() << std::endl;*/
+            //grad_hidden_with_respect_to_center_word = Collective<E>{ptr, grad_center_word.getShape() /*grad_hidden_with_respect_to_center_word.getShape()*//*.copy()*/};
+        //}
+    }
+
     /*
         TODO, 
         Use of Initialization Lists: Utilize constructor initialization lists to initialize
@@ -404,7 +483,7 @@ struct backward_propogation
         {
             throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
         }
-        grad_weights_input_to_hidden = Collective<E>{ptr, grad_W1.getShape().copy()};
+        grad_weights_input_to_hidden = Collective<E>{ptr, grad_W1.getShape()/*.copy()*/};
 
         try 
         {                    
@@ -426,13 +505,14 @@ struct backward_propogation
         {
             throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
         }
-        grad_weights_hidden_to_output = Collective<E>{ptr, grad_W2.getShape().copy()};
+        grad_weights_hidden_to_output = Collective<E>{ptr, grad_W2.getShape()/*.copy()*/};
 
         //grad_hidden_with_respect_to_center_word = Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}};
 
         try 
         {                    
             ptr = cc_tokenizer::allocator<E>().allocate(grad_center_word.getShape().getN());
+            
             for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < grad_center_word.getShape().getN(); i++)
             {
                 ptr[i] = grad_center_word[i];                
@@ -450,7 +530,19 @@ struct backward_propogation
         {
             throw ala_exception(cc_tokenizer::String<char>("backward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
         }
-        grad_hidden_with_respect_to_center_word = Collective<E>{ptr, grad_hidden_with_respect_to_center_word.getShape().copy()};
+        //std::cout<< "SONI-> problem area..." << grad_center_word.getShape().getN() << std::endl;
+        //if (grad_center_word.getShape().getN() > 0)
+        //{
+            //std::cout<< "----------------------------------------->>>>>>>> SONI-> problem area..." << grad_center_word.getShape().getN() << std::endl;
+        grad_hidden_with_respect_to_center_word = Collective<E>{ptr, grad_center_word.getShape() /*grad_hidden_with_respect_to_center_word.getShape()*//*.copy()*/};
+        //}
+    }
+
+    backward_propogation(const backward_propogation<E>& other) throw (ala_exception)
+    {
+        this->grad_hidden_with_respect_to_center_word = other.grad_hidden_with_respect_to_center_word;   
+        this->grad_weights_hidden_to_output = other.grad_weights_hidden_to_output;
+        this->grad_weights_input_to_hidden = other.grad_weights_input_to_hidden;
     }
 
     backward_propogation<E>& operator= (backward_propogation<E>& other)    
@@ -940,6 +1032,192 @@ cc_tokenizer::string_character_traits<char>::size_type* generateNegativeSamples_
 
 template <typename E = double>
 forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF vocab, WORDPAIRS_PTR pair = NULL) throw (ala_exception)
+{
+    if (pair == NULL)
+    {
+        throw ala_exception("forward() Error: Null pointer passed, expected a valid WORDPAIRS_PTR.");
+    }
+
+    cc_tokenizer::string_character_traits<char>::size_type* ptr = NULL;
+    cc_tokenizer::string_character_traits<char>::size_type n = 0, j = 0;
+
+    /*
+        Counting Valid Context Words:
+        --------------------------------
+        The following loop calculates the number of context words in the pair that are not padding tokens.
+        This information is used to determine the size of the context array (ptr) that stores the indices of the context words.
+        The context array is used to compute the hidden layer vector (h) by averaging the embeddings of the context words
+
+        INDEX_ORIGINATES_AT_VALUE IS a threshold to determine if a word index is valid.  
+        "n" keeps track of the total number of valid context words
+     */    
+    for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
+    {
+        if ((*(pair->getLeft()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+        {
+            n = n + 1;             
+        }
+        else
+        {
+            // Unnecessary
+        } 
+                    
+        if ((*(pair->getRight()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+        {
+            n = n + 1;             
+        }
+        else 
+        {
+            // Unnecessary
+        }        
+    }
+
+ #ifdef CBOW_DEBUG_PAIR
+    for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
+    {
+        if ((*(pair->getLeft()))[(SKIP_GRAM_WINDOW_SIZE - 1) - i] >= INDEX_ORIGINATES_AT_VALUE)
+        {
+            std::cout<< vocab[(*(pair->getLeft()))[/*(SKIP_GRAM_WINDOW_SIZE - 1) -*/ i]].c_str() << " ";
+        }
+        else 
+        {
+            std::cout<< "NONE ";
+        }
+    }
+    
+    std::cout<< "[ "<< vocab[pair->getCenterWord()].c_str() << " ] ";
+
+    for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
+    {
+        if ((*(pair->getRight()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+        {
+            std::cout<< vocab[(*(pair->getRight()))[i]].c_str() << " ";
+        }
+        else
+        {
+            std::cout<< "NONE ";
+        }
+    }
+    std::cout<< std::endl;
+ #endif   
+        
+    try
+    {
+        /*
+            Allocating Memory for Context Words:
+            ---------------------------------------
+            Allocate memory for the context array (ptr) based on the number of valid context words (n).
+            The context array stores the indices of the context words, which are used to compute the hidden layer vector (h).
+            The size of the context array is determined by the number of valid context words in the pair.
+         */
+        ptr = cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().allocate(/* At most it will be SKIP_GRAM_WINDOW_SIZE*2 */ n);
+
+        /*
+            Storing Context Words:
+            -------------------------
+            The following loop populates the context array (ptr) with the indices of the valid context words from the pair.
+            The indices are stored in the context array to compute the hidden layer vector (h) by averaging the embeddings of the context words.
+            The loop iterates over the context words in the pair and stores their indices in the context array.
+         */
+        for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
+        {
+            if ((*(pair->getLeft()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+            {
+                ptr[j] = (*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE;
+
+                j = j + 1;
+            }            
+        }
+        for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
+        {
+            if ((*(pair->getRight()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+            {
+                ptr[j] = (*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE;
+
+                j = j + 1;
+            }            
+        }
+        /*
+            Creating a Collective Object for Context Words:
+            --------------------------------------------------
+            Create a Collective object (context) to store the context words (ptr) with the appropriate dimensions.
+            The context object is used to compute the hidden layer vector (h) by averaging the embeddings of the context words.
+            The Collective is a container that holds the context words and their dimensions for further processing           
+         */    
+        Collective<cc_tokenizer::string_character_traits<char>::size_type> context = Collective<cc_tokenizer::string_character_traits<char>::size_type>{ptr, DIMENSIONS{/*SKIP_GRAM_WINDOW_SIZE*2 atmost*/ n, 1, NULL, NULL}};
+
+        /*
+            Computing the Hidden Layer Vector (h):
+            -----------------------------------------
+            Computes the hidden layer vector h by averaging the embeddings of the context words.
+            The hidden layer vector h is used in both the forward and backward passes of the neural network             
+         */
+         /*
+            In the context of our CBOW, h refers to the hidden layer vector obtained by averaging the embeddings of the context words.
+            It is used in both the forward and backward passes of the neural network.
+
+            The shape of this array is (1, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE), 
+            a single row vector with the size of the embedding dimension.
+         */
+         /*
+            In both Skip-gram and CBOW, the hidden layer vector (h) is computed. 
+            For CBOW, h is the average of the embeddings of the context words. 
+            This involves accessing the embeddings for all context words and averaging them.
+        */
+        Collective<E> h = Numcy::mean(W1, context);
+
+
+        /*	
+            Represents an intermediat gradient.	 
+            This vector has shape (1, len(vocab)), similar to y_pred. 
+            It represents the result of the dot product operation between the center or target word vector "h" and the weight matrix W2.
+            The result stored in "u” captures the combined influence of hidden neurons on predicting context words. It provides a
+            numerical representation of how likely each word in the vocabulary is to be a context word of a given target 
+            word (within the skip-gram model).
+
+            The variable "u" serves as an intermediary step in the forward pass, representing the activations before applying 
+            the “softmax” function to generate the predicted probabilities. 
+
+            It represents internal state in the neural network during the working of "forward pass".
+            This intermediate value is used in calculations involving gradients in "backward pass" or "back propogation"(the function backward).
+         */
+        /*
+            Both algorithms then perform a dot product between the hidden layer representation (h) and the output weight matrix (W2). 
+            This step is essential to transform the hidden layer activations into the vocabulary space for prediction.
+        */
+        Collective<E> u = Numcy::dot(h, W2);
+
+        /*
+            y_pred is a Numcy array of predicted probabilities of the output word given the input context. 
+            In our implementation, it is the output of the forward propagation step.
+
+            The shape of this array is (1, len(vocab)), indicating a single row vector with the length of the vocabulary and 
+            where each element corresponds to the predicted probability of a specific word.
+         */
+        /*
+            The resulting vector (u) is passed through a softmax function to obtain the predicted probabilities (y_pred). 
+            The softmax function converts the raw scores into probabilities.
+         */
+        Collective<E> y_pred = softmax<E>(u);
+
+        return forward_propogation<E>{h, y_pred, u};
+    }
+    catch(std::bad_alloc& e)
+    {
+        throw ala_exception(cc_tokenizer::String<char>("forward() Error: ") + cc_tokenizer::String<char>(e.what()));
+    }
+    catch(std::length_error& e)
+    {
+        throw ala_exception(cc_tokenizer::String<char>("forward() Error: ") + cc_tokenizer::String<char>(e.what()));
+    }
+    catch(ala_exception& e)
+    {
+        throw ala_exception(cc_tokenizer::String<char>("forward() Error: ") + cc_tokenizer::String<char>(e.what()));
+    }                        
+}
+
+template <typename E = double>
+forward_propogation<E> forward_old(Collective<E>& W1, Collective<E>& W2, CORPUS_REF vocab, WORDPAIRS_PTR pair = NULL) throw (ala_exception)
 {    
     if (pair == NULL)
     {
@@ -1223,6 +1501,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
      */
     Collective<T> grad_W1;
     
+
     /*
         Creating a One-Hot Vector, using Numcy::zeros with a shape of (1, vocab.numberOfUniqueTokens()).
         This creates a zero-filled column vector with a length equal to the vocabulary size
@@ -1230,18 +1509,52 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
     try 
     {                    
         oneHot = Numcy::zeros(DIMENSIONS{vocab.numberOfUniqueTokens(), 1, NULL, NULL});
+
+        /*std::cout<< oneHot.getShape().getNumberOfColumns() << " -- " << oneHot.getShape().getNumberOfRows() << std::endl;*/
  
         oneHot[pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE] = 1;
+        /*for (int i = 0; i < oneHot.getShape().getN(); i++)
+        {
+            std::cout<< oneHot[i] << ", ";
+        }
+        std::cout<< std::endl;*/
+        /*for (int i = 0; i < fp.predicted_probabilities.getShape().getN(); i++)
+        {
+            std::cout<< fp.predicted_probabilities[i] << ", ";
+        }
+        std::cout<< std::endl;*/
 
         grad_u = Numcy::subtract<double>(fp.predicted_probabilities, oneHot);
+        //std::cout<< grad_u.getShape().getNumberOfColumns() << " -- " << grad_u.getShape().getNumberOfRows() << std::endl;
 
+        /*std::cout<< "--------------------" << std::endl;*/
+
+        /*for (int i = 0; i < grad_u.getShape().getN(); i++)
+        {
+            std::cout<< grad_u[i] << ", ";
+        }
+        std::cout<< std::endl;*/
+
+        //std::cout<< fp.hidden_layer_vector.getShape().getNumberOfColumns() << " -- " << fp.hidden_layer_vector.getShape().getNumberOfRows() << std::endl;
+        //std::cout<< grad_u.getShape().getNumberOfColumns() << " -- " << grad_u.getShape().getNumberOfRows() << std::endl;
         grad_W2 = Numcy::outer(fp.hidden_layer_vector, grad_u);
-        
+        //std::cout<< grad_W2.getShape().getNumberOfColumns() << " -- " << grad_W2.getShape().getNumberOfRows() << std::endl;
+
         grad_u_T = Numcy::transpose(grad_u);
+        //std::cout<< grad_u_T.getShape().getNumberOfColumns() << " -- " << grad_u_T.getShape().getNumberOfRows() << std::endl;
         
+        //std::cout<< W2.getShape().getNumberOfColumns() << " -- " << W2.getShape().getNumberOfRows() << std::endl;
+        //std::cout<< grad_u_T.getShape().getNumberOfColumns() << " -- " << grad_u_T.getShape().getNumberOfRows() << std::endl;
         grad_h = Numcy::dot(W2, grad_u_T);
+        //std::cout<< grad_h.getShape().getNumberOfColumns() << " -- " << grad_h.getShape().getNumberOfRows() << std::endl;
                 
         grad_W1 = Numcy::zeros<T>(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
+        /*std::cout<< grad_W1.getShape().getNumberOfColumns() << " -- " << grad_W1.getShape().getNumberOfRows() << std::endl;
+        for (int i = 0; i < grad_W1.getShape().getN(); i++)
+        {
+            std::cout<< grad_W1[i] << ", ";
+        }
+        std::cout<< std::endl;*/
         
        /*
             The following code block iterates through the context word indices (left and right) from the pair object.
@@ -1261,6 +1574,11 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                     grad_W1[((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / SKIP_GRAM_WINDOW_SIZE);
                 }
             }
+            /*else 
+            {
+                // It wll be very big number
+                std::cout<< "--> " << ((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE) << std::endl;
+            }*/
         }
         // Iterate through the right context word indices in order.
         for (int i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
@@ -1274,8 +1592,13 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                     // Update the specific column of the specific row in grad_W1 by adding the corresponding value from transpose_outer_grad_h_context_ones.
                     grad_W1[((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / SKIP_GRAM_WINDOW_SIZE);
                 }
-            } 
-        }       
+            }
+            /*else 
+            {
+                // It wll be very big number
+                std::cout<< "--> " << ((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE) << std::endl;
+            }*/
+        }               
     }
     catch (ala_exception& e)
     {
@@ -1288,9 +1611,25 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
      */ 
     
     DIMENSIONS temp1 = DIMENSIONS{0, 0, NULL, NULL};
-    Collective<T> temp2 = Collective<T>{NULL, temp1.copy()};       
+    Collective<T> temp2 = Collective<T>{NULL, temp1/*.copy()*/};       
     backward_propogation<T> ret = backward_propogation<T>{grad_W1, grad_W2, temp2};
+    
+    /*std::cout<< grad_W1.getShape().getNumberOfColumns() << " -- " << grad_W1.getShape().getNumberOfRows() << std::endl;
+    for (int i = 0; i < grad_W1.getShape().getN(); i++)
+    {
+        std::cout<< grad_W1[i] << ", ";
+    }
+    std::cout<< std::endl;
+    std::cout<< "----------------------------------------------------------------------" << std::endl;*/
 
+    /*std::cout<< grad_W2.getShape().getNumberOfColumns() << " -- " << grad_W2.getShape().getNumberOfRows() << std::endl;
+    for (int i = 0; i < grad_W2.getShape().getN(); i++)
+    {
+        std::cout<< grad_W2[i] << ", ";
+    }
+    std::cout<< std::endl;
+    std::cout<< "----------------------------------------------------------------------" << std::endl;*/
+    
     return ret;
 }
 
@@ -1345,6 +1684,17 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
             {\
                 forward_propogation<t> fp = forward (W1, W2, vocab, pair);\
                 backward_propogation<t> bp = backward (W1, W2, vocab, fp, pair);\
+                /*for (int i = 0; i < bp.grad_weights_input_to_hidden.getShape().getN(); i++)*/\
+                /*{*/\
+                    /*std::cout<< bp.grad_weights_input_to_hidden[i] << ", ";*/\
+                /*}*/\
+                /*std::cout<< std::endl;*/\
+                /*std::cout<< bp.grad_weights_hidden_to_output.getShape().getNumberOfColumns() << " -- " << bp.grad_weights_hidden_to_output.getShape().getNumberOfRows() << std::endl;*/\
+                /*for (int i = 0; i < bp.grad_weights_hidden_to_output.getShape().getN(); i++)*/\
+                /*{*/\
+                    /*std::cout<< bp.grad_weights_hidden_to_output[i] << ", ";*/\
+                /*}*/\
+                /*std::cout<< std::endl;*/\
                 /* Relationship Between Learning Rate (lr) and Regularization Strength (rs) */\
                 /* ------------------------------------------------------------------------ */\
                 /* - High learning rate (lr): */\
