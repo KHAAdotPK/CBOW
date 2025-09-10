@@ -1,3 +1,12 @@
+```
+/*
+	propogation.md
+	Written by, Sohail Qayum Malik.
+ */
+```
+
+**Propagation** refers to the process of calculating and updating model weights through forward and backward passes.
+
 ## __Forward__ ~~and __Backward__~~ propogation in `CBOW` and `Skip-gram` 
 **Word2Vec** has two **word embedding algorithms**, the `Skip-gram` and `CBOW`. `Skip-gram` predicts context words for a center/target word, while `CBOW` predicts the center/target word for given context words.
 #### Steps involved in Forward propogation are more or less similar in `CBOW` and `Skip-gram`

@@ -1,0 +1,3 @@
+Regularization:
+Consider adding a small amount of weight decay or dropout to the model to prevent overfitting, especially since your dataset is so small.
+

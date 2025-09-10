@@ -31,6 +31,11 @@
    if you're encountering NaN loss in every iteration.
    0.01 to 0.001: This is a common starting point for many deep learning tasks.
    Even lower (e.g., 0.0001 or less): Depending on your specific dataset and network architecture, you might need an even smaller learning rate.
+
+   CBOW:-   
+   For Word2Vec, where typical values range from 0.01 to 0.05 (often starting at 0.025 for CBOW in the original implementation).
+   This high rate could cause the model to make large updates,
+   leading to the observed loss spikes and potentially preventing smooth convergence.
  */
 #define SKIP_GRAM_DEFAULT_LEARNING_RATE 0.00001
 /*
@@ -38,10 +43,14 @@
     10 neurons is small size, suitable for small vocabulary.
     However, for larger vocabularies and more complex tasks, a larger hidden layer size may be required to capture more intricate relationships 
     between the input and output. 
+    
+    A 100-dimensional vector is relatively high for such a small dataset (e.g. 14 lines of text training data). 
+    Word2Vec models often use 50–300 dimensions, 
+    but with limited data, a smaller dimension (e.g., 50 or even 20) might help the model focus on more meaningful features and reduce overfitting risk.
 
     Use ifdef, undef define preprocessor directives
  */
-#define SKIP_GRAM_EMBEDDNG_VECTOR_SIZE 100
+#define SKIP_GRAM_EMBEDDNG_VECTOR_SIZE 20
 /*
    Size of window of context words around a target/center word, and use the context words to predict the target word(in CBOW/Skip-Gram model) 
    In the Skip-gram model, the model predicts the context words given a target word

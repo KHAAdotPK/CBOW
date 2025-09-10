@@ -1717,9 +1717,31 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                 /*   - Adjust rs based on the learning rate (lr) to balance regularization and training speed. */\
                 if (rs == 0)\
                 {\
+                    /*std::cout<< W1.getShape().getNumberOfColumns() << " -- " << W1.getShape().getNumberOfRows() << std::endl;*/\
+                    /*std::cout<< "--------------------" << std::endl;*/\
+                    /*for (int i = 0; i < W1.getShape().getN(); i++)*/\
+                    /*{*/\
+                        /*std::cout<< W1[i] << ", ";*/\
+                    /*}*/\
+                    /*std::cout<< std::endl;*/\
+                    /*std::cout<< "*************************************************************************" << std::endl;*/\
+                    /*std::cout<< bp.grad_weights_input_to_hidden.getShape().getNumberOfColumns() << " -- " << bp.grad_weights_input_to_hidden.getShape().getNumberOfRows() << std::endl;*/\
+                    /*for (int i = 0; i < bp.grad_weights_input_to_hidden.getShape().getN(); i++)*/\
+                    /*{*/\
+                        /*bp.grad_weights_input_to_hidden[i] = 1;*/\
+                        /*std::cout<< bp.grad_weights_input_to_hidden[i] << ", ";*/\
+                    /*}*/\
+                    /*std::cout<< std::endl;*/\
                     /* Update weights without regularization strength */\
                     W1 -= bp.grad_weights_input_to_hidden * lr;\
                     W2 -= bp.grad_weights_hidden_to_output * lr;\
+                    /*std::cout<< W1.getShape().getNumberOfColumns() << " -- " << W1.getShape().getNumberOfRows() << std::endl;*/\
+                    /*std::cout<< "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;*/\
+                    /*for (int i = 0; i < W1.getShape().getN(); i++)*/\
+                    /*{*/\
+                        /*std::cout<< W1[i] << ", ";*/\
+                    /*}*/\
+                    /*std::cout<< std::endl;*/\
                 }\
                 else\
                 {\
@@ -1730,8 +1752,8 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                     /* Update weights with regulariztion strength */\
                     Collective<t> rs_W1 = W1 * rs;\
                     Collective<t> rs_W2 = W2 * rs;\
-                    W1 -= ((bp.grad_weights_input_to_hidden + rs_W1/*(W1 * rs)*/) * lr);\
-                    W2 -= ((bp.grad_weights_hidden_to_output + rs_W2 /*(W2 * rs)*/) * lr);\
+                    W1 -= ((bp.grad_weights_input_to_hidden + rs_W1/*<->(W1 * rs)*/) * lr);\
+                    W2 -= ((bp.grad_weights_hidden_to_output + rs_W2 /*<->(W2 * rs)*/) * lr);\
                 }\
                 /* Loss Function: The CBOW model typically uses negative log-likelihood (NLL) as the loss function.\
                    In NLL, lower values indicate better performance. */\

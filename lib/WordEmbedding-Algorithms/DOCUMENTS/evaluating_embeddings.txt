@@ -1,0 +1,2 @@
+Evaluate Embeddings: 
+Test the quality of your embeddings using qualitative methods (e.g., visualizing with t-SNE) or quantitative tasks (e.g., word similarity or analogy tasks if you have a small test set). This will confirm whether the low loss translates to meaningful representations.
