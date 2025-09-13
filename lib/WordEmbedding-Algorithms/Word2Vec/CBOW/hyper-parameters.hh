@@ -55,7 +55,9 @@
    Size of window of context words around a target/center word, and use the context words to predict the target word(in CBOW/Skip-Gram model) 
    In the Skip-gram model, the model predicts the context words given a target word
  */ 
+#ifndef SKIP_GRAM_WINDOW_SIZE
 #define SKIP_GRAM_WINDOW_SIZE 2
+#endif
 
 /*
    The number of negative samples is a hyperparameter. 
