@@ -38,6 +38,20 @@ int main(int argc, char* argv[])
     FIND_ARG(argv, argc, argsv_parser, "input", arg_input);
     FIND_ARG(argv, argc, argsv_parser, "output", arg_output);
 
+    if (arg_output.i)
+    {
+        FIND_ARG_BLOCK(argv, argc, argsv_parser, arg_output);
+        
+        if (arg_output.argc < 2)
+        {
+            ARG arg_output_help;
+            HELP(argsv_parser, arg_output_help, "--output");                
+            HELP_DUMP(argsv_parser, arg_output_help);
+            
+            return -1;
+        }       
+    }
+
     if (arg_corpus.i)
     {
         FIND_ARG_BLOCK(argv, argc, argsv_parser, arg_corpus);
@@ -226,9 +240,9 @@ int main(int argc, char* argv[])
     std::cout<< "Training done!" << std::endl;
 
     if (arg_output.i)
-    {
-        WRITE_W_BIN(W1, argv[arg_w1.i + 1], double);
-        WRITE_W_BIN(W2, argv[arg_w2.i + 1], double);
+    {                   
+        WRITE_W_BIN(W1, argv[arg_output.i + 1], double);
+        WRITE_W_BIN(W2, argv[arg_output.i + 2], double);
     }
                 
     return 0;
