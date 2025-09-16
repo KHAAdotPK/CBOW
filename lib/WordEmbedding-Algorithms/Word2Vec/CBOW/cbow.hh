@@ -1548,7 +1548,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         grad_h = Numcy::dot(W2, grad_u_T);
         //std::cout<< grad_h.getShape().getNumberOfColumns() << " -- " << grad_h.getShape().getNumberOfRows() << std::endl;
                 
-        grad_W1 = Numcy::zeros<T>(DIMENSIONS{SKIP_GRAM_EMBEDDNG_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
+        grad_W1 = Numcy::zeros<T>(DIMENSIONS{SKIP_GRAM_EMBEDDING_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
         /*std::cout<< grad_W1.getShape().getNumberOfColumns() << " -- " << grad_W1.getShape().getNumberOfRows() << std::endl;
         for (int i = 0; i < grad_W1.getShape().getN(); i++)
         {
