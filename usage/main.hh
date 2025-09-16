@@ -51,6 +51,7 @@ w1 --w1 (Specifies the file containing the trained input weights.)\n\
 w2 --w2 (Specifies the file containing the trained output weights.)\n\
 input --input (Specifies the filenames to retrieve the partially input trained weights during training.)\n\
 output --output (Specifies the filenames to store the output trained weights after completion of training.)\n\
-rs --rs (Sets the regularization strength, used to prevent overfitting.)\n"
+rs --rs (Sets the regularization strength, used to prevent overfitting.)\n\
+vc --vc --validation_corpus (Path to the file which has the data the model has never seen during training.)\n"
 
 #endif

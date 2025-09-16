@@ -1646,8 +1646,11 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  * @param rs (Type: float or double)
  *      The regularization strength for the model. This parameter helps prevent overfitting by penalizing large weights in the model.
  * 
- * @param pairs: (Type: PAIRS or similar data structure)
+ * @param training_pairs: (Type: PAIRS or similar data structure)
  *      The training data, which contains word pairs. Each pair consists of a center word and its surrounding context words. The model learns to predict the center word from its context.
+ * 
+ * @param validation_pairs: (Type: PAIRS or similar data structure)
+ *      The validatio data, which contains word pair. Each pair consists of a center word and its surrounding context words. The model learns to predict the center word from its context.
  *
  * @param t: (Template Type)
  *      A generic template type for numerical operations. This allows the macro to work with different numerical types (e.g., float, double) depending on precision requirements.
@@ -1664,7 +1667,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  * @param W2: (Type: Collective<t>)
  *      The hidden-to-output weight matrix. This matrix is used to predict the center word from the context word embeddings and is also updated during training.
  */
-#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, pairs, t, verbose, vocab, W1, W2)\
+#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, training_pairs, validation_pairs, t, verbose, vocab, W1, W2)\
 {\
     /* Epoch loop */\
     for (cc_tokenizer::string_character_traits<char>::size_type i = 1; i <= epoch; i++)\
@@ -1674,12 +1677,12 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
             std::cout<< "Epoch# " << i << " of " << epoch << " epochs." << std::endl;\
         }\
         /* Shuffle Word Pairs: Shuffles the training data (word pairs) before each epoch to avoid biases in weight updates */\
-        Numcy::Random::shuffle<PAIRS>(pairs, pairs.get_number_of_word_pairs());\
+        Numcy::Random::shuffle<PAIRS>(training_pairs, training_pairs.get_number_of_word_pairs());\
         /* Iterates through each word pair in the training data  */\
-        while (pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<char>::eof())\
+        while (training_pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<char>::eof())\
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
-            WORDPAIRS_PTR pair = pairs.get_current_word_pair();\
+            WORDPAIRS_PTR pair = training_pairs.get_current_word_pair();\
             try\
             {\
                 forward_propogation<t> fp = forward (W1, W2, vocab, pair);\
@@ -1764,8 +1767,13 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                 std::cout<< "CBOW_TRAINING_LOOP() -> " << e.what() << std::endl;\
             }\
         }\
-        std::cout<< "epoch_loss = " << el/pairs.get_number_of_word_pairs() << std::endl;\
+        std::cout<< "epoch_loss = " << el/training_pairs.get_number_of_word_pairs() << std::endl;\
         el = 0;\
+        /*--------------------------------------------------*/\
+        /*    PHASE 2: VALIDATION ON THE VALIDATION DATA    */\
+        /*--------------------------------------------------*/\
+        /* Now, with the updated weights from this epoch,*/\
+        /* see how the model performs on the unseen validation set.*/\
     }\
 }\
 

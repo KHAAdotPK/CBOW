@@ -7,10 +7,11 @@
 
 int main(int argc, char* argv[])
 { 
-    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output;
+    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output, arg_vc;
     cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> argsv_parser(cc_tokenizer::String<char>(COMMAND));
     
-    cc_tokenizer::String<char> data;
+    cc_tokenizer::String<char> training_data;
+    cc_tokenizer::String<char> validation_data;
 
     FIND_ARG(argv, argc, argsv_parser, "?", arg_help);
     if (arg_help.i)
@@ -37,6 +38,7 @@ int main(int argc, char* argv[])
     FIND_ARG(argv, argc, argsv_parser, "w2", arg_w2);
     FIND_ARG(argv, argc, argsv_parser, "input", arg_input);
     FIND_ARG(argv, argc, argsv_parser, "output", arg_output);
+    FIND_ARG(argv, argc, argsv_parser, "--validation_corpus", arg_vc);
 
     if (arg_output.i)
     {
@@ -59,13 +61,13 @@ int main(int argc, char* argv[])
         {            
             try 
             {
-                data = cc_tokenizer::cooked_read<char>(argv[arg_corpus.i + 1]);
+                training_data = cc_tokenizer::cooked_read<char>(argv[arg_corpus.i + 1]);
                 if (arg_verbose.i)
                 {
                     std::cout<< "Corpus: " << argv[arg_corpus.i + 1] << std::endl;
                 }
             }
-            catch (ala_exception e)
+            catch (ala_exception& e)
             {
                 std::cout<<e.what()<<std::endl;
                 return -1;
@@ -84,18 +86,43 @@ int main(int argc, char* argv[])
     {
         try
         {        
-            data = cc_tokenizer::cooked_read<char>(CBOW_DEFAULT_CORPUS_FILE);
+            training_data = cc_tokenizer::cooked_read<char>(CBOW_DEFAULT_CORPUS_FILE);
             if (arg_verbose.i)
             {
                 std::cout<< "Corpus: " << CBOW_DEFAULT_CORPUS_FILE << std::endl;
             }
         }
-        catch (ala_exception e)
+        catch (ala_exception& e)
         {
             std::cout<<e.what()<<std::endl;
             return -1;
         }
     }
+
+    if (arg_vc.i) 
+    {
+        FIND_ARG_BLOCK(argv, argc, argsv_parser, arg_vc);        
+        if (arg_vc.argc < 1)
+        {
+            ARG arg_vc_help;
+            HELP(argsv_parser, arg_vc_help, "--vc");                
+            HELP_DUMP(argsv_parser, arg_vc_help);
+            
+            return -1;
+        }
+        else 
+        {
+            try 
+            {
+                validation_data = cc_tokenizer::cooked_read<char>(argv[arg_vc.i + 1]);
+            }
+            catch (ala_exception& e)
+            {
+                std::cout<<e.what()<<std::endl;
+                return -1;              
+            }
+        }        
+    }   
     
     /*        
         In the context of training a machine learning model, an epoch is defined as a complete pass over the entire training dataset during training.
@@ -173,9 +200,13 @@ int main(int argc, char* argv[])
         }
     }
     
-    cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> data_parser(data);
-    class Corpus vocab(data_parser);    
-    PAIRS pairs(vocab, arg_verbose.i ? true : false);
+    cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> training_data_parser(training_data);
+    class Corpus training_vocab(training_data_parser);    
+    PAIRS training_pairs(training_vocab, arg_verbose.i ? true : false);
+
+    cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> validation_data_parser(validation_data);
+    class Corpus validation_vocab(validation_data_parser);    
+    PAIRS validation_pairs(validation_vocab, arg_verbose.i ? true : false);
 
     /*
         For the neural network itself, Skip-gram typically uses a simple architecture. 
@@ -213,13 +244,13 @@ int main(int argc, char* argv[])
     {        
         if (!arg_input.i)
         {                        
-            W1 = Numcy::Random::randn(DIMENSIONS{SKIP_GRAM_EMBEDDING_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});            
-            W2 = Numcy::Random::randn(DIMENSIONS{vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDING_VECTOR_SIZE, NULL, NULL});         
+            W1 = Numcy::Random::randn(DIMENSIONS{SKIP_GRAM_EMBEDDING_VECTOR_SIZE, training_vocab.numberOfUniqueTokens(), NULL, NULL});            
+            W2 = Numcy::Random::randn(DIMENSIONS{training_vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDING_VECTOR_SIZE, NULL, NULL});         
         }
         else
         {
-            W1 = Collective<double>{NULL, DIMENSIONS{SKIP_GRAM_EMBEDDING_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL}};
-            W2 = Collective<double>{NULL, DIMENSIONS{vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDING_VECTOR_SIZE, NULL, NULL}};
+            W1 = Collective<double>{NULL, DIMENSIONS{SKIP_GRAM_EMBEDDING_VECTOR_SIZE, training_vocab.numberOfUniqueTokens(), NULL, NULL}};
+            W2 = Collective<double>{NULL, DIMENSIONS{training_vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDING_VECTOR_SIZE, NULL, NULL}};
 
             READ_W_BIN(W1, argv[arg_w1.i + 1], double);
             READ_W_BIN(W2, argv[arg_w2.i + 1], double);
@@ -235,7 +266,7 @@ int main(int argc, char* argv[])
 
     double epoch_loss = 0.0;
                      
-    CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, pairs, double, arg_verbose.i ? true : false, vocab, W1, W2);
+    CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, training_pairs, validation_pairs, double, arg_verbose.i ? true : false, training_vocab, W1, W2);
     
     std::cout<< "Training done!" << std::endl;
 
