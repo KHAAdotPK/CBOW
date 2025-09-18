@@ -1688,7 +1688,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         /*    PHASE 1: Training Weights with the training data     */\
         /*---------------------------------------------------------*/\
         /* Iterates through each word pair in the training data  */\
-        while (training_pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<char>::eof())\
+        while (training_pairs.go_to_next_word_pair(PAIRS_TRAIN) != cc_tokenizer::string_character_traits<char>::eof())\
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
             WORDPAIRS_PTR pair = training_pairs.get_current_word_pair();\
@@ -1784,7 +1784,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         /* Now, with the updated weights from this epoch,*/\
         /* see how the model performs on the unseen validation set.*/\
         t validation_loss_accumulator = 0;\
-        while (validation_pairs.go_to_next_word_pair() != cc_tokenizer::string_character_traits<char>::eof())\
+        while (validation_pairs.go_to_next_word_pair(PAIRS_VALIDATE) != cc_tokenizer::string_character_traits<char>::eof())\
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
             WORDPAIRS_PTR pair = validation_pairs.get_current_word_pair();\
