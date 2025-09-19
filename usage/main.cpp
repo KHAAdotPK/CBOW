@@ -266,7 +266,7 @@ int main(int argc, char* argv[])
 
     double epoch_loss = 0.0;
                      
-    CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, training_pairs, validation_pairs, double, arg_verbose.i ? true : false, training_vocab, validation_vocab, W1, W2);
+    CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, training_pairs /*, validation_pairs*/, double, arg_verbose.i ? true : false, training_vocab/*, validation_vocab*/, W1, W2);
     
     std::cout<< "Training done!" << std::endl;
 

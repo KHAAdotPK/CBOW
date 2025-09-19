@@ -1648,10 +1648,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  * 
  * @param training_pairs: (Type: PAIRS)
  *      The training data, which contains word pairs. Each pair consists of a center word and its surrounding context words. The model learns to predict the center word from its context.
- * 
- * @param validation_pairs: (Type: PAIRS)
- *      The validatio data, which contains word pair. Each pair consists of a center word and its surrounding context words. The model learns to predict the center word from its context.
- *
+ *  
  * @param t: (Template Type)
  *      A generic template type for numerical operations. This allows the macro to work with different numerical types (e.g., float, double) depending on precision requirements.
  *
@@ -1660,9 +1657,6 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  *
  * @param training_vocab: (Type: CORPUS)
  *      The vocabulary data structure that stores all the unique words used in training. It is required to index and retrieve word embeddings during forward and backward propagation.
- * 
- * @param validation_vocab (Type: CORPUS)
- *      The vocabulary data structure that stores all the unique words used in validating training weights. It is required to index and retrieve word embeddings during forward and backward propagation.
  *
  * @param W1: (Type: Collective<t>)
  *      The input-to-hidden weight matrix. It holds the word embeddings for the context words and is updated during backpropagation.
@@ -1670,7 +1664,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  * @param W2: (Type: Collective<t>)
  *      The hidden-to-output weight matrix. This matrix is used to predict the center word from the context word embeddings and is also updated during training.
  */
-#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, training_pairs, validation_pairs, t, verbose, training_vocab, validation_vocab, W1, W2)\
+#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, training_pairs, t, verbose, training_vocab, W1, W2)\
 {\
     cc_tokenizer::string_character_traits<char>::size_type best_epoch = 0;\
     /* Initialize to infinity */\
@@ -1776,7 +1770,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                 std::cout<< "CBOW_TRAINING_LOOP() PHASE 1 -> " << e.what() << std::endl;\
             }\
         }\
-        std::cout<< "epoch_loss = " << el/training_pairs.get_number_of_word_pairs() << std::endl;\
+        std::cout<< "epoch_loss = " << el/(training_pairs.get_number_of_word_pairs()*PAIRS_VOCABULARY_TRAINING_SPLIT) << std::endl;\
         el = 0;\
         /*---------------------------------------------------------*/\
         /*  PHASE 2: VALIDATION Weights with the validation data   */\
@@ -1784,15 +1778,15 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         /* Now, with the updated weights from this epoch,*/\
         /* see how the model performs on the unseen validation set.*/\
         t validation_loss_accumulator = 0;\
-        while (validation_pairs.go_to_next_word_pair(PAIRS_VALIDATE) != cc_tokenizer::string_character_traits<char>::eof())\
+        while (training_pairs.go_to_next_word_pair(PAIRS_VALIDATE) != cc_tokenizer::string_character_traits<char>::eof())\
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
-            WORDPAIRS_PTR pair = validation_pairs.get_current_word_pair();\
+            WORDPAIRS_PTR pair = training_pairs.get_current_word_pair();\
             try\
             {\
                 /* Perform only a forward pass to see how the model performs on data it hasn't trained on */\
                 /* Crucially, you do not perform backpropagation or update any weights (W1, W2). The model's weights are effectively frozen during this phase */\
-                forward_propogation<t> fp = forward (W1, W2, validation_vocab, pair);\
+                forward_propogation<t> fp = forward (W1, W2, /*validation_vocab*/training_vocab, pair);\
                 validation_loss_accumulator = validation_loss_accumulator + (-1*log(fp.pb(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE)));\
             }\
             catch (ala_exception& e)\
@@ -1803,7 +1797,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         /*--------------------------------------------------*/\
         /*      PHASE 3: LOGGING AND DECISION MAKING        */\
         /*--------------------------------------------------*/\
-        t avg_validation_loss = validation_loss_accumulator / validation_pairs.get_number_of_word_pairs();\
+        t avg_validation_loss = validation_loss_accumulator /(training_pairs.get_number_of_word_pairs()*PAIRS_VOCABULARY_VALIDATION_SPLIT);\
         if (avg_validation_loss < best_validation_loss)\
         {\
             best_validation_loss = avg_validation_loss;\
