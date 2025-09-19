@@ -1682,7 +1682,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         /*    PHASE 1: Training Weights with the training data     */\
         /*---------------------------------------------------------*/\
         /* Iterates through each word pair in the training data  */\
-        while (training_pairs.go_to_next_word_pair(PAIRS_TRAIN) != cc_tokenizer::string_character_traits<char>::eof())\
+        while (training_pairs.go_to_next_word_pair(PAIRS_TRAINING_PHASE) != cc_tokenizer::string_character_traits<char>::eof())\
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
             WORDPAIRS_PTR pair = training_pairs.get_current_word_pair();\
@@ -1770,7 +1770,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                 std::cout<< "CBOW_TRAINING_LOOP() PHASE 1 -> " << e.what() << std::endl;\
             }\
         }\
-        std::cout<< "epoch_loss = " << el/(training_pairs.get_number_of_word_pairs()*PAIRS_VOCABULARY_TRAINING_SPLIT) << std::endl;\
+        std::cout<< "epoch_loss = " << el/PAIRS_VOCABULARY_TRAINING_SPLIT(training_pairs.get_number_of_word_pairs()/**PAIRS_VOCABULARY_TRAINING_SPLIT*/) << std::endl;\
         el = 0;\
         /*---------------------------------------------------------*/\
         /*  PHASE 2: VALIDATION Weights with the validation data   */\
@@ -1778,7 +1778,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         /* Now, with the updated weights from this epoch,*/\
         /* see how the model performs on the unseen validation set.*/\
         t validation_loss_accumulator = 0;\
-        while (training_pairs.go_to_next_word_pair(PAIRS_VALIDATE) != cc_tokenizer::string_character_traits<char>::eof())\
+        while (training_pairs.go_to_next_word_pair(PAIRS_VALIDATION_PHASE) != cc_tokenizer::string_character_traits<char>::eof())\
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
             WORDPAIRS_PTR pair = training_pairs.get_current_word_pair();\
@@ -1797,7 +1797,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         /*--------------------------------------------------*/\
         /*      PHASE 3: LOGGING AND DECISION MAKING        */\
         /*--------------------------------------------------*/\
-        t avg_validation_loss = validation_loss_accumulator /(training_pairs.get_number_of_word_pairs()*PAIRS_VOCABULARY_VALIDATION_SPLIT);\
+        t avg_validation_loss = validation_loss_accumulator / PAIRS_VOCABULARY_VALIDATION_SPLIT(training_pairs.get_number_of_word_pairs()/**PAIRS_VOCABULARY_VALIDATION_SPLIT*/);\
         if (avg_validation_loss < best_validation_loss)\
         {\
             best_validation_loss = avg_validation_loss;\
