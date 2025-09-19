@@ -1677,7 +1677,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
             std::cout<< "Epoch# " << i << " of " << epoch << " epochs." << std::endl;\
         }\
         /* Shuffle Word Pairs: Shuffles the training data (word pairs) before each epoch to avoid biases in weight updates */\
-        Numcy::Random::shuffle<PAIRS>(training_pairs, training_pairs.get_number_of_word_pairs());\
+        Numcy::Random::shuffle<PAIRS>(training_pairs, PAIRS_VOCABULARY_TRAINING_SPLIT(training_pairs.get_number_of_word_pairs())  /*training_pairs.get_number_of_word_pairs()*/ );\
         /*---------------------------------------------------------*/\
         /*    PHASE 1: Training Weights with the training data     */\
         /*---------------------------------------------------------*/\
