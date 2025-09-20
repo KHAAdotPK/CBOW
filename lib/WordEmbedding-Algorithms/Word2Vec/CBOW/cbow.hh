@@ -1663,8 +1663,14 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  *
  * @param W2: (Type: Collective<t>)
  *      The hidden-to-output weight matrix. This matrix is used to predict the center word from the context word embeddings and is also updated during training.
+ * @param W1_best: (Type: Collective<t>)
+ *      W1 weights with minimum validation loss.
+ * 
+ * @param W2_best: (Type: Collective<t>)
+ *      W2 weights with minimum validation loss.
+ * 
  */
-#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, training_pairs, t, verbose, training_vocab, W1, W2)\
+#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, training_pairs, t, verbose, training_vocab, W1, W2, W1_best, W2_best)\
 {\
     cc_tokenizer::string_character_traits<char>::size_type best_epoch = 0;\
     /* Initialize to infinity */\
@@ -1802,6 +1808,11 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         {\
             best_validation_loss = avg_validation_loss;\
             best_epoch = i;\
+            for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < W1.getShape().getN(); j++)\
+            {\
+                W1_best[j] = W1[j];\
+                W2_best[j] = W2[j];\
+            }\
         }\
         std::cout<< "Accumulated validation loss: " << validation_loss_accumulator << ", ";\
         std::cout<< "Average validation loss: " << avg_validation_loss << std::endl;\
@@ -1813,7 +1824,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         /*----------------------------------------------------*/\
     }\
     /* After the entire loop finishes */\
-    std::cout << "*\nBest overall validation loss (Final Validatio Loss): " << best_validation_loss << " (at epoch " << best_epoch << ")" << std::endl;\
+    std::cout << "*\nBest overall validation loss (Final Validation Loss): " << best_validation_loss << " (at epoch " << best_epoch << ")" << std::endl;\
 }\
 
 #endif

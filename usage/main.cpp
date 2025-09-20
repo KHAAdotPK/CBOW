@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[])
 { 
-    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output, arg_vc;
+    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output/*, arg_vc*/;
     cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> argsv_parser(cc_tokenizer::String<char>(COMMAND));
     
     cc_tokenizer::String<char> training_data;
@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
     FIND_ARG(argv, argc, argsv_parser, "w2", arg_w2);
     FIND_ARG(argv, argc, argsv_parser, "input", arg_input);
     FIND_ARG(argv, argc, argsv_parser, "output", arg_output);
-    FIND_ARG(argv, argc, argsv_parser, "--validation_corpus", arg_vc);
+    /*FIND_ARG(argv, argc, argsv_parser, "--validation_corpus", arg_vc);*/
 
     if (arg_output.i)
     {
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (arg_vc.i) 
+    /*if (arg_vc.i) 
     {
         FIND_ARG_BLOCK(argv, argc, argsv_parser, arg_vc);        
         if (arg_vc.argc < 1)
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
                 return -1;              
             }
         }        
-    }   
+    }*/   
     
     /*        
         In the context of training a machine learning model, an epoch is defined as a complete pass over the entire training dataset during training.
@@ -204,9 +204,9 @@ int main(int argc, char* argv[])
     class Corpus training_vocab(training_data_parser);    
     PAIRS training_pairs(training_vocab, arg_verbose.i ? true : false);
 
-    cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> validation_data_parser(validation_data);
+    /*cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> validation_data_parser(validation_data);
     class Corpus validation_vocab(validation_data_parser);    
-    PAIRS validation_pairs(validation_vocab, arg_verbose.i ? true : false);
+    PAIRS validation_pairs(validation_vocab, arg_verbose.i ? true : false);*/
 
     /*
         For the neural network itself, Skip-gram typically uses a simple architecture. 
@@ -237,9 +237,9 @@ int main(int argc, char* argv[])
 
         * By predicting surrounding context words based on the central word's embedding, Skip-gram learns to capture semantic relationships between words with similar contexts.
      */    
-    Collective<double> W1;    
-    Collective<double> W2;    
-    
+    Collective<double> W1, W1_best;    
+    Collective<double> W2, W2_best;
+            
     try 
     {        
         if (!arg_input.i)
@@ -255,6 +255,9 @@ int main(int argc, char* argv[])
             READ_W_BIN(W1, argv[arg_w1.i + 1], double);
             READ_W_BIN(W2, argv[arg_w2.i + 1], double);
         }
+
+        W1_best = Numcy::zeros(DIMENSIONS{SKIP_GRAM_EMBEDDING_VECTOR_SIZE, training_vocab.numberOfUniqueTokens(), NULL, NULL});
+        W2_best = Numcy::zeros(DIMENSIONS{training_vocab.numberOfUniqueTokens(), SKIP_GRAM_EMBEDDING_VECTOR_SIZE, NULL, NULL});
     }
     catch (ala_exception& e)
     {
@@ -266,14 +269,16 @@ int main(int argc, char* argv[])
 
     double epoch_loss = 0.0;
                      
-    CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, training_pairs, double, arg_verbose.i ? true : false, training_vocab, W1, W2);
+    CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, training_pairs, double, arg_verbose.i ? true : false, training_vocab, W1, W2, W1_best, W2_best);
     
     std::cout<< "Training done!" << std::endl;
 
     if (arg_output.i)
-    {                   
-        WRITE_W_BIN(W1, argv[arg_output.i + 1], double);
-        WRITE_W_BIN(W2, argv[arg_output.i + 2], double);
+    {                           
+        WRITE_W_BIN(W1_best, argv[arg_output.i + 1], double);
+        WRITE_W_BIN(W2_best, argv[arg_output.i + 2], double);
+
+        std::cout<< "Weights saved to files \"" << argv[arg_output.i + 1] << "\" and \"" << argv[arg_output.i + 2] << "\"" << std::endl;   
     }
                 
     return 0;
