@@ -1,3 +1,10 @@
+```
+/*
+	NegativeSampling.md
+	Written by, Sohail Qayum Malik.
+ */
+```
+
 #### Implementation of Negative Sampling in this CBOW model.
 ---
 **What are Positive Samples**?
