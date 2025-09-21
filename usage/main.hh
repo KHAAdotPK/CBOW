@@ -41,6 +41,9 @@
 
 #include "../lib/WordEmbedding-Algorithms/Word2Vec/CBOW/header.hh"
 
+// vc --vc --validation_corpus (Path to the file which has the data the model has never seen during training.)
+// --w2-t --w2-transpose --w2-swap-axes --w2-axis-flip --reshape-w2 --w2_row_to_col --w2-flip (Transpose W2 weight matrix)\n"
+
 #define COMMAND "h -h help --help ? /? (Displays the help screen, listing available commands and their descriptions.)\n\
 v -v version --version /v (Shows the current version of the software.)\n\
 e epoch --epoch /e (Sets the epoch count, determining the number of iterations for the training loop.)\n\
@@ -52,6 +55,6 @@ w2 --w2 (Specifies the file containing the trained output weights.)\n\
 input --input (Specifies the filenames to retrieve the partially input trained weights during training.)\n\
 output --output (Specifies the filenames to store the output trained weights after completion of training.)\n\
 rs --rs (Sets the regularization strength, used to prevent overfitting.)\n\
-vc --vc --validation_corpus (Path to the file which has the data the model has never seen during training.)\n"
+--w2-t --w2-transpose --w2-swap-axes --w2-axis-flip --reshape-w2 --w2_row_to_col --w2-flip (Transpose W2 weight matrix)\n"
 
 #endif

@@ -36,6 +36,7 @@ set cbow_debug_forward_pair="CbowDebugForwardPair=no"
 set error_message_text=
 set help_option=
 set validation_corpus_option=
+set w2_transpose_option=
 
 :start_parsing_args
 
@@ -43,9 +44,13 @@ if "%1"=="verbose" (
     set verbose_option=verbose
     shift
     goto :start_parsing_args
+) else if "%1"=="--w2-t" (
+   set w2_transpose_option="--w2_row_to_col"
+   shift
+   goto :start_parsing_args         
 ) else if "%1"=="e" (
     if "%2" neq "" (    
-        set epochs_option=%2        
+        set epochs_option="%2"        
         shift
     ) 
     shift
@@ -59,14 +64,14 @@ if "%1"=="verbose" (
     goto :start_parsing_args
 ) else if "%1"=="lr" (
     if "%2" neq "" (
-        set learning_rate_option=%2
+        set learning_rate_option="%2"
         shift
     )
     shift
     goto :start_parsing_args
 ) else if "%1"=="rs" (
     if "%2" neq "" (
-        set regularization_strength_option=%2
+        set regularization_strength_option="%2"
         shift
     )
     shift
@@ -136,7 +141,7 @@ if "%1"=="verbose" (
    goto :start_parsing_args
 )
 
-@ .\cow.exe corpus %corpus_filename_option% lr %learning_rate_option% epoch %epochs_option% rs %regularization_strength_option% %verbose_option% %input_option% %output_option% %output_w1_filename_option% %output_w2_filename_option% w1 %w1_filename_option% w2 %w2_filename_option% %help_option% %validation_corpus_option%
+@ .\cow.exe corpus %corpus_filename_option% lr %learning_rate_option% epoch %epochs_option% rs %regularization_strength_option% %verbose_option% %input_option% %output_option% %output_w1_filename_option% %output_w2_filename_option% w1 %w1_filename_option% w2 %w2_filename_option% %help_option% %validation_corpus_option% %w2_transpose_option%
 goto :eof
 
 :build

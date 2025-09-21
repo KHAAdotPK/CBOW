@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[])
 { 
-    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output/*, arg_vc*/;
+    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output/*, arg_vc*/, arg_w2_transpose;
     cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> argsv_parser(cc_tokenizer::String<char>(COMMAND));
     
     cc_tokenizer::String<char> training_data;
@@ -39,6 +39,8 @@ int main(int argc, char* argv[])
     FIND_ARG(argv, argc, argsv_parser, "input", arg_input);
     FIND_ARG(argv, argc, argsv_parser, "output", arg_output);
     /*FIND_ARG(argv, argc, argsv_parser, "--validation_corpus", arg_vc);*/
+    FIND_ARG(argv, argc, argsv_parser, "--w2-t", arg_w2_transpose);
+
 
     if (arg_output.i)
     {
@@ -279,6 +281,45 @@ int main(int argc, char* argv[])
         WRITE_W_BIN(W2_best, argv[arg_output.i + 2], double);
 
         std::cout<< "Weights saved to files \"" << argv[arg_output.i + 1] << "\" and \"" << argv[arg_output.i + 2] << "\"" << std::endl;   
+    
+        if (arg_w2_transpose.i)
+        {
+            cc_tokenizer::String<char> original_name = cc_tokenizer::String<char>(argv[arg_output.i + 2]);
+
+            cc_tokenizer::string_character_traits<char>::size_type pos = original_name.find('.', 0);
+
+            if (pos != cc_tokenizer::String<char>::npos)
+            {                
+                cc_tokenizer::String<char> name = original_name.substr(0, pos);
+                cc_tokenizer::String<char> ext = original_name.substr(pos, original_name.size() - pos);                
+                original_name = name + cc_tokenizer::String<char>("-transposed") + ext;                
+            }
+            else 
+            {
+                original_name = original_name + cc_tokenizer::String<char>("-transposed");
+            }
+            
+            Collective<double> W2_best_transposed = Numcy::zeros(W1_best.getShape());
+
+            try 
+            {
+                for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < W2_best.getShape().getNumberOfRows(); i++)
+                {
+                    for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < W2_best.getShape().getNumberOfColumns(); j++)
+                    {
+                        W2_best_transposed[j*W2_best_transposed.getShape().getNumberOfColumns() + i] = W2_best[i*W2_best.getShape().getNumberOfColumns() + j];
+                    }
+                }
+
+                WRITE_W_BIN(W2_best_transposed, original_name.c_str(), double);
+
+                std::cout<< "W2 weights transposed and saved to file \"" << original_name.c_str() << "\"" ;
+            }
+            catch (ala_exception& e)
+            {
+                std::cout<< "main() -> " << e.what() << std::endl;    
+            }
+        }        
     }
                 
     return 0;
