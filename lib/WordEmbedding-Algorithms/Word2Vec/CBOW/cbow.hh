@@ -25,7 +25,7 @@ struct forward_propogation
         are initialized directly in the initialization list.
         This approach is cleaner and more efficient than assigning them inside the constructor body.
      */
-    forward_propogation(void) : hidden_layer_vector(Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}}), predicted_probabilities(Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}}), intermediate_activation(Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}})
+    forward_propogation(void) : hidden_layer_vector(Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}}), predicted_probabilities(Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}}), intermediate_activation(Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}}), negative_hidden_layer_vector(Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}}), negative_predicted_probabilities(Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}}), negative_intermediate_activation(Collective<E>{NULL, DIMENSIONS{0, 0, NULL, NULL}})
     {        
     }
 
@@ -36,11 +36,29 @@ struct forward_propogation
         implemented but still commented out from the implementation of function.
      */
     //forward_propogation<E>(Collective<E>& h, Collective<E>& y_pred, Collective<E>& u) : hidden_layer_vector(h), predicted_probabilities(y_pred), intermediate_activation(u)
-    forward_propogation<E>(Collective<E>& h, Collective<E>& y_pred, Collective<E>& u) /*: hidden_layer_vector(h), predicted_probabilities(y_pred), intermediate_activation(u) */
-    {           
-        E* ptr = NULL;
+    forward_propogation<E>(Collective<E>& h, Collective<E>& y_pred, Collective<E>& u, Collective<E>& h_negative, Collective<E>& y_pred_negative, Collective<E>& u_negative) throw (ala_exception) /*: hidden_layer_vector(h), predicted_probabilities(y_pred), intermediate_activation(u) */
+    { 
+        try
+        {
+            this->hidden_layer_vector = h;
+            this->predicted_probabilities = y_pred;
+            this->intermediate_activation = u;
 
-        try 
+            this->negative_hidden_layer_vector = h_negative;        
+            this->negative_predicted_probabilities = y_pred_negative;
+            this->negative_intermediate_activation = u_negative;
+        }
+        catch(ala_exception& e)
+        {
+            // Propagate existing ala_exception with additional context
+            // NO cleanup performed assuming this is also a critical error
+            throw ala_exception(cc_tokenizer::String<char>("forward_propagaton<E>::forward_propagation(Collective<E>&, Collective<E>&, Collective<E>&, Collective<E>&, Collective<E>&, Collective<E>&) -> ") + e.what());
+        }
+        
+        
+        //E* ptr = NULL;
+
+        /*try 
         {                    
             ptr = cc_tokenizer::allocator<E>().allocate(h.getShape().getN());
             for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < h.getShape().getN(); i++)
@@ -59,10 +77,11 @@ struct forward_propogation
         catch (ala_exception& e)
         {
             throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
-        }
-        hidden_layer_vector = Collective<E>{ptr, h.getShape()/*.copy()*/};
+        }*/
+        //hidden_layer_vector = Collective<E>{ptr, h.getShape()/*.copy()*/};
+        /*this->hidden_layer_vector = h;*/
 
-        try
+        /*try
         {                 
             ptr = cc_tokenizer::allocator<E>().allocate(y_pred.getShape().getN());
             for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < y_pred.getShape().getN(); i++)
@@ -81,10 +100,11 @@ struct forward_propogation
         catch (ala_exception& e)
         {
             throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
-        }
-        predicted_probabilities = Collective<E>{ptr, y_pred.getShape()/*.copy()*/};
+        }*/
+        //predicted_probabilities = Collective<E>{ptr, y_pred.getShape()/*.copy()*/};
+        /*this->predicted_probabilities = y_pred;*/
 
-        try
+        /*try
         {        
             ptr = cc_tokenizer::allocator<E>().allocate(u.getShape().getN());
             for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < u.getShape().getN(); i++)
@@ -103,35 +123,135 @@ struct forward_propogation
         catch (ala_exception& e)
         {
             throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }*/
+        //intermediate_activation = Collective<E>{ptr, u.getShape()/*.copy()*/};
+        /*this->intermediate_activation = u;*/
+
+        /*this->negative_hidden_layer_vector = h_negative;        
+        this->negative_predicted_probabilities = negative_predicted_probabilities;
+        this->negative_intermediate_activation = negative_intermediate_activation;*/
+
+
+        /*std::cout<< "Get Reference Count = " << this->negative_hidden_layer_vector.getReferenceCount() << std::endl;*/
+        
+        /*try 
+        {                    
+            ptr = cc_tokenizer::allocator<E>().allocate(h_negative.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < h_negative.getShape().getN(); i++)
+            {
+                ptr[i] = h_negative[i];                
+            }
         }
-        intermediate_activation = Collective<E>{ptr, u.getShape()/*.copy()*/};
+        catch (std::length_error& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::bad_alloc& e)
+        {
+           throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (ala_exception& e)
+        {
+            throw ala_exception(cc_tokenizer::String<char>("forward_propogation() Error: ") + cc_tokenizer::String<char>(e.what()));
+        }*/
+        //negative_hidden_layer_vector = Collective<E>{ptr, h_negative.getShape()/*.copy()*/};
     }
 
-    forward_propogation<E>(forward_propogation<E>& other) 
-    {           
-        E* ptr = cc_tokenizer::allocator<E>().allocate(other.hidden_layer_vector.getShape().getN());
-        for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.hidden_layer_vector.getShape().getN(); i++)
-        {
-            ptr[i] = other.hidden_layer_vector[i];
-        }
-        hidden_layer_vector = Collective<E>{ptr, other.hidden_layer_vector.getShape().copy()};
+    forward_propogation<E>(forward_propogation<E>& other) throw (ala_exception)
+    {          
+        E* ptr = NULL;
 
-        ptr = cc_tokenizer::allocator<E>().allocate(other.predicted_probabilities.getShape().getN());
-        for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.predicted_probabilities.getShape().getN(); i++)
-        {
-            ptr[i] = other.predicted_probabilities[i];
-        }
-        predicted_probabilities = Collective<E>{ptr, other.predicted_probabilities.getShape().copy()};
+        try
+        {        
+            ptr = cc_tokenizer::allocator<E>().allocate(other.hidden_layer_vector.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.hidden_layer_vector.getShape().getN(); i++)
+            {
+                ptr[i] = other.hidden_layer_vector[i];
+            }
+            hidden_layer_vector = Collective<E>{ptr, other.hidden_layer_vector.getShape()/*.copy()*/};
 
-        ptr = cc_tokenizer::allocator<E>().allocate(other.intermediate_activation.getShape().getN());
-        for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.intermediate_activation.getShape().getN(); i++)
-        {
-            ptr[i] = other.intermediate_activation[i];
+            ptr = cc_tokenizer::allocator<E>().allocate(other.predicted_probabilities.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.predicted_probabilities.getShape().getN(); i++)
+            {
+                ptr[i] = other.predicted_probabilities[i];
+            }
+            predicted_probabilities = Collective<E>{ptr, other.predicted_probabilities.getShape()/*.copy()*/};
+
+            ptr = cc_tokenizer::allocator<E>().allocate(other.intermediate_activation.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.intermediate_activation.getShape().getN(); i++)
+            {
+                ptr[i] = other.intermediate_activation[i];
+            }
+            intermediate_activation = Collective<E>{ptr, other.intermediate_activation.getShape()/*.copy()*/};
+
+            ptr = cc_tokenizer::allocator<E>().allocate(other.negative_hidden_layer_vector.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.negative_hidden_layer_vector.getShape().getN(); i++)
+            {
+                ptr[i] = other.negative_hidden_layer_vector[i];
+            }
+            negative_hidden_layer_vector = Collective<E>{ptr, other.negative_hidden_layer_vector.getShape()/*.copy()*/};
+
+            ptr = cc_tokenizer::allocator<E>().allocate(other.negative_predicted_probabilities.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.negative_predicted_probabilities.getShape().getN(); i++)
+            {
+                ptr[i] = other.negative_predicted_probabilities[i];
+            }
+            negative_predicted_probabilities = Collective<E>{ptr, other.negative_predicted_probabilities.getShape()/*.copy()*/};
+
+            ptr = cc_tokenizer::allocator<E>().allocate(other.negative_intermediate_activation.getShape().getN());
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < other.negative_intermediate_activation.getShape().getN(); i++)
+            {
+                ptr[i] = other.negative_intermediate_activation[i];
+            }
+            negative_intermediate_activation = Collective<E>{ptr, other.negative_intermediate_activation.getShape()/*.copy()*/};
         }
-        intermediate_activation = Collective<E>{ptr, other.intermediate_activation.getShape().copy()};
+        catch (std::bad_alloc& e)
+        {
+            // CRITICAL: Memory allocation failure - system should terminate immediately
+            // NO cleanup performed - this is a fatal error requiring process exit
+            throw ala_exception(cc_tokenizer::String<char>("forward_propagation<E>::forward_propagation(Collective<E>&) Error: ") + cc_tokenizer::String<char>(e.what())); 
+        }
+        catch (std::length_error& e)
+        {
+            // CRITICAL: Length constraint violation - system should terminate immediately
+            // NO cleanup performed - this is a fatal error requiring process exit
+            throw ala_exception(cc_tokenizer::String<char>("forward_propagation<E>::forward_propagation(Collective<E>&) Error: ") + cc_tokenizer::String<char>(e.what())); 
+        } 
+        catch (ala_exception& e)
+        {
+            // Propagate existing ala_exception with additional context
+            // NO cleanup performed assuming this is also a critical error
+            throw ala_exception(cc_tokenizer::String<char>("forward_propagation<E>::forward_propagation(Collective<E>&) -> ") + cc_tokenizer::String<char>(e.what())); 
+        }
     }
 
-    forward_propogation<E>& operator= (forward_propogation<E>& other)    
+    forward_propogation<E>& operator= (forward_propogation<E>& other)
+    {
+        // Self assignment check
+        if (this == &other)
+        {
+            return *this;            
+        }
+        
+        try
+        {
+            this->hidden_layer_vector = other.hidden_layer_vector;
+            this->predicted_probabilities = other.predicted_probabilities;
+            this->intermediate_activation = other.intermediate_activation;
+
+            this->negative_hidden_layer_vector = other.negative_hidden_layer_vector;        
+            this->negative_predicted_probabilities = other.negative_predicted_probabilities;
+            this->negative_intermediate_activation = other.negative_intermediate_activation;
+        }
+        catch(ala_exception& e)
+        {
+            // Propagate existing ala_exception with additional context
+            // NO cleanup performed assuming this is also a critical error
+            throw ala_exception(cc_tokenizer::String<char>("forward_propagaton<E>::operator= (Collective<E>&) -> ") + e.what());
+        }
+    }
+
+    /*forward_propogation<E>& operator= (forward_propogation<E>& other)    
     { 
         if (this == &other)
         {
@@ -150,15 +270,15 @@ struct forward_propogation
         }
         catch (std::length_error& e)
         {
-            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+            throw ala_exception(cc_tokenizer::String<char>("forward_propagation<E>::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
         }
         catch (std::bad_alloc& e)
         {
-           throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
+           throw ala_exception(cc_tokenizer::String<char>("forward_propagation<E>::operator=() Error: ") + cc_tokenizer::String<char>(e.what())); 
         }
         catch (ala_exception& e)
         {
-            throw ala_exception(cc_tokenizer::String<char>("forward_propogation::operator=() Error: ") + cc_tokenizer::String<char>(e.what()));
+            throw ala_exception(cc_tokenizer::String<char>("forward_propagation<E>::operator=() -> ") + cc_tokenizer::String<char>(e.what()));
         }
         hidden_layer_vector = Collective<E>{ptr, other.hidden_layer_vector.getShape().copy()};
 
@@ -207,7 +327,7 @@ struct forward_propogation
         intermediate_activation = Collective<E>{ptr, other.intermediate_activation.getShape().copy()};
         
         return *this;
-    }
+    }*/
     
     /*
         Hidden Layer Vector accessor methods
@@ -259,6 +379,20 @@ struct forward_propogation
     {
         return *(intermediate_activation.getShape().copy());
     }
+
+    /*
+        Negative Predicted Probabilities accesssor methods
+     */
+    E npp(cc_tokenizer::string_character_traits<char>::size_type i) throw (ala_exception)
+    {
+        if (i >= negative_predicted_probabilities.getShape().getN())
+        {
+            // NO cleanup performed assuming this is also a critical error
+            throw ala_exception("forward_propagation::npp(cc_tokenizer::string_character_traits<char>::size_type) Error: Provided index value is out of bounds.");
+        }
+
+        return negative_predicted_probabilities[((i/negative_predicted_probabilities.getShape().getNumberOfColumns())*negative_predicted_probabilities.getShape().getNumberOfColumns() + i%negative_predicted_probabilities.getShape().getNumberOfColumns())];
+    }    
 
     /*
         Declare forward as a friend function within the struct. It is templated, do we need it like this.
@@ -330,11 +464,21 @@ struct forward_propogation
         Collective<E> intermediate_activation; 
 
         /*
+            In the context of our CBOW/Skip-Gram model, h_negative refers to the hidden layer vector obtained by averaging the embeddings of the negative_context words.
+            It is used in both the forward and backward passes of the neural network.
+
+            The shape of this array is (1, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE), a single row vector with the size of the embedding dimension.
+         */
+        //E* h_negative
+        Collective<E> negative_hidden_layer_vector;
+
+        /*
             Predicted probabilities for the negative samples, i.e., words that are not related to the context or target word.
         
             Shape: (N, len(vocab)), where N is the number of negative samples and each element represents the probability of
             a specific word being incorrectly predicted as context.
          */
+        //E* y_pred_negative
         Collective<E> negative_predicted_probabilities;
 
         /*	
@@ -343,6 +487,7 @@ struct forward_propogation
         
             Shape: (N, len(vocab)), where N is the number of negative samples.
          */
+        //E* u_negative;
         Collective<E> negative_intermediate_activation;
 };
 
@@ -841,10 +986,10 @@ Collective<T> softmax(Collective<T>& a, bool verbose = false) throw (ala_excepti
  *                                                                   to avoid memory leaks
  */
 template <typename E = cc_tokenizer::string_character_traits<char>::size_type>
-E* generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = CBOW_NEGAIVE_SAMPLE_SIZE) throw (ala_exception)
+Collective<E> generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = CBOW_NEGATIVE_SAMPLE_SIZE) throw (ala_exception)
 {    
     E lowerbound = 0 + INDEX_ORIGINATES_AT_VALUE;
-    E higherbound = vocab.numberOfUniqueTokens() + INDEX_ORIGINATES_AT_VALUE - 1;
+    E higherbound = PAIRS_VOCABULARY_TRAINING_SPLIT((vocab.numberOfUniqueTokens() + INDEX_ORIGINATES_AT_VALUE - 1));
     /*    
         For documentation purposes. 
         Ensure valid distribution bounds, we know our bounds can't generate negative random numbers
@@ -961,7 +1106,7 @@ E* generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = CBOW
         }
     }
 
-    return ptr;
+    return Collective<E> {ptr, DIMENSIONS{n, 1, NULL, NULL}};    
 }
 
 
@@ -1031,7 +1176,7 @@ cc_tokenizer::string_character_traits<char>::size_type* generateNegativeSamples_
 }
 
 template <typename E = double>
-forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF vocab, WORDPAIRS_PTR pair = NULL) throw (ala_exception)
+forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<cc_tokenizer::string_character_traits<char>::size_type>& negative_context, CORPUS_REF vocab, WORDPAIRS_PTR pair = NULL) throw (ala_exception)
 {
     if (pair == NULL)
     {
@@ -1144,7 +1289,7 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
             The context object is used to compute the hidden layer vector (h) by averaging the embeddings of the context words.
             The Collective is a container that holds the context words and their dimensions for further processing           
          */    
-        Collective<cc_tokenizer::string_character_traits<char>::size_type> context = Collective<cc_tokenizer::string_character_traits<char>::size_type>{ptr, DIMENSIONS{/*SKIP_GRAM_WINDOW_SIZE*2 atmost*/ n, 1, NULL, NULL}};
+        Collective<cc_tokenizer::string_character_traits<char>::size_type> context = Collective<cc_tokenizer::string_character_traits<char>::size_type>{ptr, DIMENSIONS{n, 1, NULL, NULL}};
 
         /*
             Computing the Hidden Layer Vector (h):
@@ -1166,6 +1311,7 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
         */
         Collective<E> h = Numcy::mean(W1, context);
 
+        //std::cout<< "-------->>>>>>>>>>>>>>>>>>> h = " << h.getShape().getN() << std::endl;
 
         /*	
             Represents an intermediat gradient.	 
@@ -1200,20 +1346,35 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, CORPUS_REF 
          */
         Collective<E> y_pred = softmax<E>(u);
 
-        return forward_propogation<E>{h, y_pred, u};
+        Collective<E> h_negative, u_negative, y_pred_negative;
+
+        if (negative_context.getShape().getN())
+        {
+            h_negative = Numcy::mean(W1, negative_context);
+            u_negative = Numcy::dot(h_negative, W2);
+            y_pred_negative = softmax(u_negative);
+        }
+
+        return forward_propogation<E>{h, y_pred, u, h_negative, y_pred_negative, u_negative,};
     }
     catch(std::bad_alloc& e)
     {
-        throw ala_exception(cc_tokenizer::String<char>("forward() Error: ") + cc_tokenizer::String<char>(e.what()));
+        // CRITICAL: Memory allocation failure - system should terminate immediately
+        // NO cleanup performed - this is a fatal error requiring process exit
+        throw ala_exception(cc_tokenizer::String<char>("forward(Collective<E>&, Collective<E>&, Collective<cc_tokenizer::string_character_traits<char>::size_type>&, CORPUS_REF, WORDPAIRS_PTR) Error: ") + cc_tokenizer::String<char>(e.what()));
     }
     catch(std::length_error& e)
     {
-        throw ala_exception(cc_tokenizer::String<char>("forward() Error: ") + cc_tokenizer::String<char>(e.what()));
+        // CRITICAL: Length constraint violation - system should terminate immediately
+        // NO cleanup performed - this is a fatal error requiring process exit
+        throw ala_exception(cc_tokenizer::String<char>("forward(Collective<E>&, Collective<E>&, Collective<cc_tokenizer::string_character_traits<char>::size_type>&, CORPUS_REF, WORDPAIRS_PTR) Error: ") + cc_tokenizer::String<char>(e.what()));
     }
     catch(ala_exception& e)
     {
-        throw ala_exception(cc_tokenizer::String<char>("forward() Error: ") + cc_tokenizer::String<char>(e.what()));
-    }                        
+        // Propagate existing ala_exception with additional context
+        // NO cleanup performed assuming this is also a critical error
+        throw ala_exception(cc_tokenizer::String<char>("forward(Collective<E>&, Collective<E>&, Collective<cc_tokenizer::string_character_traits<char>::size_type>&, CORPUS_REF, WORDPAIRS_PTR) -> ") + cc_tokenizer::String<char>(e.what()));
+    }          
 }
 
 template <typename E = double>
@@ -1646,7 +1807,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  * @param rs (Type: float or double)
  *      The regularization strength for the model. This parameter helps prevent overfitting by penalizing large weights in the model.
  * 
- * @param training_pairs: (Type: PAIRS)
+ * @param pairs: (Type: PAIRS)
  *      The training data, which contains word pairs. Each pair consists of a center word and its surrounding context words. The model learns to predict the center word from its context.
  *  
  * @param t: (Template Type)
@@ -1655,7 +1816,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  * @param verbose: (Type: bool)
  *      If true, prints detailed logs of the training process, such as the current epoch number and other information for debugging or tracking purposes.
  *
- * @param training_vocab: (Type: CORPUS)
+ * @param vocab: (Type: CORPUS)
  *      The vocabulary data structure that stores all the unique words used in training. It is required to index and retrieve word embeddings during forward and backward propagation.
  *
  * @param W1: (Type: Collective<t>)
@@ -1670,7 +1831,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  *      W2 weights with minimum validation loss.
  * 
  */
-#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, training_pairs, t, verbose, training_vocab, W1, W2, W1_best, W2_best)\
+#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, pairs, t, verbose, vocab, W1, W2, W1_best, W2_best)\
 {\
     cc_tokenizer::string_character_traits<char>::size_type best_epoch = 0;\
     /* Initialize to infinity */\
@@ -1683,19 +1844,20 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
             std::cout<< "Epoch# " << i << " of " << epoch << " epochs." << std::endl;\
         }\
         /* Shuffle Word Pairs: Shuffles the training data (word pairs) before each epoch to avoid biases in weight updates */\
-        Numcy::Random::shuffle<PAIRS>(training_pairs, PAIRS_VOCABULARY_TRAINING_SPLIT(training_pairs.get_number_of_word_pairs())  /*training_pairs.get_number_of_word_pairs()*/ );\
+        Numcy::Random::shuffle<PAIRS>(training_pairs, PAIRS_VOCABULARY_TRAINING_SPLIT(pairs.get_number_of_word_pairs()));\
         /*---------------------------------------------------------*/\
         /*    PHASE 1: Training Weights with the training data     */\
         /*---------------------------------------------------------*/\
         /* Iterates through each word pair in the training data  */\
-        while (training_pairs.go_to_next_word_pair(PAIRS_TRAINING_PHASE) != cc_tokenizer::string_character_traits<char>::eof())\
+        while (pairs.go_to_next_word_pair(PAIRS_TRAINING_PHASE) != cc_tokenizer::string_character_traits<char>::eof())\
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
-            WORDPAIRS_PTR pair = training_pairs.get_current_word_pair();\
+            WORDPAIRS_PTR pair = pairs.get_current_word_pair();\
+            Collective<cc_tokenizer::string_character_traits<char>::size_type> negative_samples = generateNegativeSamples_cbow(vocab, pair, static_cast<cc_tokenizer::string_character_traits<char>::size_type>(CBOW_NEGATIVE_SAMPLE_SIZE));\
             try\
             {\
-                forward_propogation<t> fp = forward (W1, W2, training_vocab, pair);\
-                backward_propogation<t> bp = backward (W1, W2, training_vocab, fp, pair);\
+                forward_propogation<t> fp = forward<t> (W1, W2, negative_samples, vocab, pair);\
+                backward_propogation<t> bp = backward (W1, W2, vocab, fp, pair);\
                 /*for (int i = 0; i < bp.grad_weights_input_to_hidden.getShape().getN(); i++)*/\
                 /*{*/\
                     /*std::cout<< bp.grad_weights_input_to_hidden[i] << ", ";*/\
@@ -1770,13 +1932,23 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                 /* Loss Function: The CBOW model typically uses negative log-likelihood (NLL) as the loss function.\
                    In NLL, lower values indicate better performance. */\
                 el = el + (-1*log(fp.pb(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE)));\
+                /*Calculate negative loss (for negative samples)*/\
+                if (negative_samples.getShape().getN() > 0)\
+                {\
+                    for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < negative_samples.getShape().getN(); i++)\
+                    {\
+                        /* Assuming y_pred_negative is a Collective<E> that holds probabilities for negative samples */\
+                        t negative_loss = -1 * log(1 - fp.npp(i)); /* Calculate loss for each negative sample */\
+                        el = el + negative_loss;\
+                    }\
+                }\
             }\
             catch (ala_exception& e)\
             {\
                 std::cout<< "CBOW_TRAINING_LOOP() PHASE 1 -> " << e.what() << std::endl;\
             }\
         }\
-        std::cout<< "epoch_loss = " << el/PAIRS_VOCABULARY_TRAINING_SPLIT(training_pairs.get_number_of_word_pairs()/**PAIRS_VOCABULARY_TRAINING_SPLIT*/) << std::endl;\
+        std::cout<< "epoch_loss = " << el/PAIRS_VOCABULARY_TRAINING_SPLIT(pairs.get_number_of_word_pairs()/**PAIRS_VOCABULARY_TRAINING_SPLIT*/) << std::endl;\
         el = 0;\
         /*---------------------------------------------------------*/\
         /*  PHASE 2: VALIDATION Weights with the validation data   */\
@@ -1784,15 +1956,16 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         /* Now, with the updated weights from this epoch,*/\
         /* see how the model performs on the unseen validation set.*/\
         t validation_loss_accumulator = 0;\
-        while (training_pairs.go_to_next_word_pair(PAIRS_VALIDATION_PHASE) != cc_tokenizer::string_character_traits<char>::eof())\
+        while (pairs.go_to_next_word_pair(PAIRS_VALIDATION_PHASE) != cc_tokenizer::string_character_traits<char>::eof())\
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
-            WORDPAIRS_PTR pair = training_pairs.get_current_word_pair();\
+            WORDPAIRS_PTR pair = pairs.get_current_word_pair();\
+            Collective<cc_tokenizer::string_character_traits<char>::size_type> negative_samples /*= generateNegativeSamples_cbow(vocab, pair, static_cast<cc_tokenizer::string_character_traits<char>::size_type>(CBOW_NEGATIVE_SAMPLE_SIZE))*/;\
             try\
             {\
                 /* Perform only a forward pass to see how the model performs on data it hasn't trained on */\
                 /* Crucially, you do not perform backpropagation or update any weights (W1, W2). The model's weights are effectively frozen during this phase */\
-                forward_propogation<t> fp = forward (W1, W2, /*validation_vocab*/training_vocab, pair);\
+                forward_propogation<t> fp = forward (W1, W2, negative_samples, vocab, pair);\
                 validation_loss_accumulator = validation_loss_accumulator + (-1*log(fp.pb(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE)));\
             }\
             catch (ala_exception& e)\
@@ -1803,7 +1976,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         /*--------------------------------------------------*/\
         /*      PHASE 3: LOGGING AND DECISION MAKING        */\
         /*--------------------------------------------------*/\
-        t avg_validation_loss = validation_loss_accumulator / PAIRS_VOCABULARY_VALIDATION_SPLIT(training_pairs.get_number_of_word_pairs()/**PAIRS_VOCABULARY_VALIDATION_SPLIT*/);\
+        t avg_validation_loss = validation_loss_accumulator / PAIRS_VOCABULARY_VALIDATION_SPLIT(pairs.get_number_of_word_pairs());\
         if (avg_validation_loss < best_validation_loss)\
         {\
             best_validation_loss = avg_validation_loss;\
