@@ -30,6 +30,7 @@ set corpus_filename_option="./data/adult_abdominal_pain_input.txt"
 set epochs_option=1
 set learning_rate_option=0.025
 set regularization_strength_option=0.000000
+set negative_samples_option="--negative_samples 0"
 set input_option=
 set output_option=
 set cbow_debug_forward_pair="CbowDebugForwardPair=no"
@@ -139,9 +140,18 @@ if "%1"=="verbose" (
    shift
    shift
    goto :start_parsing_args
+) else if "%1"=="ns" (
+   set error_message_text="`nc` option requires 1 additional parameters"  
+   if "%2" == "" (
+      goto :error_message
+   )
+   set negative_samples_option="%1" "%2"
+   shift
+   shift
+   goto :start_parsing_args
 )
 
-@ .\cow.exe corpus %corpus_filename_option% lr %learning_rate_option% epoch %epochs_option% rs %regularization_strength_option% %verbose_option% %input_option% %output_option% %output_w1_filename_option% %output_w2_filename_option% w1 %w1_filename_option% w2 %w2_filename_option% %help_option% %validation_corpus_option% %w2_transpose_option%
+@ .\cow.exe corpus %corpus_filename_option% lr %learning_rate_option% epoch %epochs_option% rs %regularization_strength_option% %verbose_option% %input_option% %output_option% %output_w1_filename_option% %output_w2_filename_option% w1 %w1_filename_option% w2 %w2_filename_option% %help_option% %validation_corpus_option% %w2_transpose_option% %negative_samples_option%
 goto :eof
 
 :build

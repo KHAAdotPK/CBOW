@@ -986,8 +986,13 @@ Collective<T> softmax(Collective<T>& a, bool verbose = false) throw (ala_excepti
  *                                                                   to avoid memory leaks
  */
 template <typename E = cc_tokenizer::string_character_traits<char>::size_type>
-Collective<E> generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = CBOW_NEGATIVE_SAMPLE_SIZE) throw (ala_exception)
-{    
+Collective<E> generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = CBOW_NUMBER_OF_NEGATIVE_SAMPLES) throw (ala_exception)
+{     
+    if (n == 0)
+    {
+        return Collective<E>();
+    }
+    
     E lowerbound = 0 + INDEX_ORIGINATES_AT_VALUE;
     E higherbound = PAIRS_VOCABULARY_TRAINING_SPLIT((vocab.numberOfUniqueTokens() + INDEX_ORIGINATES_AT_VALUE - 1));
     /*    
@@ -1807,6 +1812,9 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  * @param rs (Type: float or double)
  *      The regularization strength for the model. This parameter helps prevent overfitting by penalizing large weights in the model.
  * 
+ * @param ns (Type: cc_tokenizer::string_character_traits<char>::size_type)
+ * 
+ * 
  * @param pairs: (Type: PAIRS)
  *      The training data, which contains word pairs. Each pair consists of a center word and its surrounding context words. The model learns to predict the center word from its context.
  *  
@@ -1831,7 +1839,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
  *      W2 weights with minimum validation loss.
  * 
  */
-#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, pairs, t, verbose, vocab, W1, W2, W1_best, W2_best)\
+#define CBOW_TRAINING_LOOP(el, epoch, lr, rs, ns, pairs, t, verbose, vocab, W1, W2, W1_best, W2_best)\
 {\
     cc_tokenizer::string_character_traits<char>::size_type best_epoch = 0;\
     /* Initialize to infinity */\
@@ -1853,7 +1861,7 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
             WORDPAIRS_PTR pair = pairs.get_current_word_pair();\
-            Collective<cc_tokenizer::string_character_traits<char>::size_type> negative_samples = generateNegativeSamples_cbow(vocab, pair, static_cast<cc_tokenizer::string_character_traits<char>::size_type>(CBOW_NEGATIVE_SAMPLE_SIZE));\
+            Collective<cc_tokenizer::string_character_traits<char>::size_type> negative_samples = generateNegativeSamples_cbow(vocab, pair, ns);\
             try\
             {\
                 forward_propogation<t> fp = forward<t> (W1, W2, negative_samples, vocab, pair);\
@@ -1907,8 +1915,8 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                     /*}*/\
                     /*std::cout<< std::endl;*/\
                     /* Update weights without regularization strength */\
-                    W1 -= bp.grad_weights_input_to_hidden * lr;\
-                    W2 -= bp.grad_weights_hidden_to_output * lr;\
+                                /*W1 -= bp.grad_weights_input_to_hidden * lr;*/\
+                                /*W2 -= bp.grad_weights_hidden_to_output * lr;*/\
                     /*std::cout<< W1.getShape().getNumberOfColumns() << " -- " << W1.getShape().getNumberOfRows() << std::endl;*/\
                     /*std::cout<< "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;*/\
                     /*for (int i = 0; i < W1.getShape().getN(); i++)*/\
@@ -1916,6 +1924,26 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                         /*std::cout<< W1[i] << ", ";*/\
                     /*}*/\
                     /*std::cout<< std::endl;*/\
+                    Collective<t> W1_product = bp.grad_weights_input_to_hidden * lr;\
+                    Collective<t> W2_product = bp.grad_weights_hidden_to_output * lr;\
+                    /*std::cout<< W1_product.getShape().getNumberOfColumns() << " -- " << W1_product.getShape().getNumberOfRows() << std::endl;*/\
+                    /*std::cout<< W2_product.getShape().getNumberOfColumns() << " -- " << W2_product.getShape().getNumberOfRows() << std::endl;*/\
+                    /*std::cout<< "W1 = " << PAIRS_VOCABULARY_TRAINING_SPLIT(W1.getShape().getNumberOfRows()) << ", W2 = " << PAIRS_VOCABULARY_TRAINING_SPLIT(W2.getShape().getNumberOfRows()) << std::endl;*/\
+                    for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < PAIRS_VOCABULARY_TRAINING_SPLIT(W1.getShape().getNumberOfRows()); j++)\
+                    {\
+                        for (cc_tokenizer::string_character_traits<char>::size_type k = 0; k < W1.getShape().getNumberOfColumns(); k++)\
+                        {\
+                            W1[j*W1.getShape().getNumberOfColumns() + k] = W1[j*W1.getShape().getNumberOfColumns() + k] - W1_product[j*W1_product.getShape().getNumberOfColumns() + k];\
+                        }\
+                    }\
+                    \
+                    for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < PAIRS_VOCABULARY_TRAINING_SPLIT(W2.getShape().getNumberOfRows()); j++)\
+                    {\
+                        for (cc_tokenizer::string_character_traits<char>::size_type k = 0; k < W2.getShape().getNumberOfColumns(); k++)\
+                        {\
+                            W2[j*W2.getShape().getNumberOfColumns() + k] = W2[j*W2.getShape().getNumberOfColumns() + k] - W2_product[j*W2_product.getShape().getNumberOfColumns() + k];\
+                        }\
+                    }\
                 }\
                 else\
                 {\

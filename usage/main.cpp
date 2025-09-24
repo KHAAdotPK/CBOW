@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[])
 { 
-    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output/*, arg_vc*/, arg_w2_transpose;
+    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output, arg_ns, arg_w2_transpose;
     cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> argsv_parser(cc_tokenizer::String<char>(COMMAND));
     
     cc_tokenizer::String<char> training_data;
@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
     FIND_ARG(argv, argc, argsv_parser, "w2", arg_w2);
     FIND_ARG(argv, argc, argsv_parser, "input", arg_input);
     FIND_ARG(argv, argc, argsv_parser, "output", arg_output);
-    /*FIND_ARG(argv, argc, argsv_parser, "--validation_corpus", arg_vc);*/
+    FIND_ARG(argv, argc, argsv_parser, "ns", arg_ns);
     FIND_ARG(argv, argc, argsv_parser, "--w2-t", arg_w2_transpose);
 
 
@@ -101,30 +101,21 @@ int main(int argc, char* argv[])
         }
     }
 
-    /*if (arg_vc.i) 
+    cc_tokenizer::string_character_traits<char>::size_type default_ns = CBOW_NUMBER_OF_NEGATIVE_SAMPLES;
+    if (arg_ns.i) 
     {
-        FIND_ARG_BLOCK(argv, argc, argsv_parser, arg_vc);        
-        if (arg_vc.argc < 1)
+        FIND_ARG_BLOCK(argv, argc, argsv_parser, arg_ns);        
+        if (arg_ns.argc < 1)
         {
-            ARG arg_vc_help;
-            HELP(argsv_parser, arg_vc_help, "--vc");                
-            HELP_DUMP(argsv_parser, arg_vc_help);
+            ARG arg_ns_help;
+            HELP(argsv_parser, arg_ns_help, "--ns");                
+            HELP_DUMP(argsv_parser, arg_ns_help);
             
             return -1;
         }
-        else 
-        {
-            try 
-            {
-                validation_data = cc_tokenizer::cooked_read<char>(argv[arg_vc.i + 1]);
-            }
-            catch (ala_exception& e)
-            {
-                std::cout<<e.what()<<std::endl;
-                return -1;              
-            }
-        }        
-    }*/   
+        
+        default_ns = atoi(argv[arg_ns.i + 1]);
+    }   
     
     /*        
         In the context of training a machine learning model, an epoch is defined as a complete pass over the entire training dataset during training.
@@ -271,7 +262,7 @@ int main(int argc, char* argv[])
 
     double epoch_loss = 0.0;
                      
-    CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, training_pairs, double, arg_verbose.i ? true : false, training_vocab, W1, W2, W1_best, W2_best);
+    CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, default_ns, training_pairs, double, arg_verbose.i ? true : false, training_vocab, W1, W2, W1_best, W2_best);
     
     std::cout<< "Training done!" << std::endl;
 

@@ -77,6 +77,6 @@
    You typically generate multiple negative samples for each positive sample.
    It is common to generate more negative samples than positive ones, for example, 5 or 10 negative samples for each positive sample.   
  */
-#define CBOW_NEGAIVE_SAMPLE_SIZE 10
+#define CBOW_NUMBER_OF_NEGATIVE_SAMPLES 10
 
 #endif
