@@ -1952,10 +1952,26 @@ backward_propogation<T> backward(Collective<T>& W1, Collective<T>& W2, CORPUS_RE
                     /*W2 -= ((bp.grad_weights_hidden_to_output + (W2 * rs)) * lr);*/\
                     \
                     /* Update weights with regulariztion strength */\
-                    Collective<t> rs_W1 = W1 * rs;\
-                    Collective<t> rs_W2 = W2 * rs;\
-                    W1 -= ((bp.grad_weights_input_to_hidden + rs_W1/*<->(W1 * rs)*/) * lr);\
-                    W2 -= ((bp.grad_weights_hidden_to_output + rs_W2 /*<->(W2 * rs)*/) * lr);\
+                    Collective<t> rs_w1 = W1 * rs;\
+                    Collective<t> rs_w2 = W2 * rs;\
+                    Collective<t> grad_w1_plus_rs_w1_to_lr = ((bp.grad_weights_input_to_hidden + rs_w1/*<->(W1 * rs)*/) * lr);\
+                    Collective<t> grad_w2_plus_rs_w2_to_lr = ((bp.grad_weights_hidden_to_output + rs_w2 /*<->(W2 * rs)*/) * lr);\
+                    for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < PAIRS_VOCABULARY_TRAINING_SPLIT(W1.getShape().getNumberOfRows()); j++)\
+                    {\
+                        for (cc_tokenizer::string_character_traits<char>::size_type k = 0; k < W1.getShape().getNumberOfColumns(); k++)\
+                        {\
+                            W1[j*W1.getShape().getNumberOfColumns() + k] = W1[j*W1.getShape().getNumberOfColumns() + k] - grad_w1_plus_rs_w1_to_lr[j*grad_w1_plus_rs_w1_to_lr.getShape().getNumberOfColumns() + k];\
+                        }\
+                    }\
+                    /*W1 -= ((bp.grad_weights_input_to_hidden + rs_w1*//*<->(W1 * rs)*//*) * lr);*/\
+                    for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < PAIRS_VOCABULARY_TRAINING_SPLIT(W2.getShape().getNumberOfRows()); j++)\
+                    {\
+                        for (cc_tokenizer::string_character_traits<char>::size_type k = 0; k < W2.getShape().getNumberOfColumns(); k++)\
+                        {\
+                            W2[j*W2.getShape().getNumberOfColumns() + k] = W2[j*W2.getShape().getNumberOfColumns() + k] - grad_w2_plus_rs_w2_to_lr[j*grad_w2_plus_rs_w2_to_lr.getShape().getNumberOfColumns() + k];\
+                        }\
+                    }\
+                    /*W2 -= ((bp.grad_weights_hidden_to_output + rs_w2*/ /*<->(W2 * rs)*//*) * lr);*/\
                 }\
                 /* Loss Function: The CBOW model typically uses negative log-likelihood (NLL) as the loss function.\
                    In NLL, lower values indicate better performance. */\
