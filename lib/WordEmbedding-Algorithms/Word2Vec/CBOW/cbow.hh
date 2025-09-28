@@ -979,11 +979,9 @@ Collective<T> softmax(Collective<T>& a, bool verbose = false) throw (ala_excepti
  * @throws ala_exception - Throws this exception in case of memory allocation errors (`std::bad_alloc`) 
  *                         or length issues (`std::length_error`) during dynamic memory allocation
  *
- * @return cc_tokenizer::string_character_traits<char>::size_type* - Returns a pointer to an array of negative samples.
- *                                                                   The array contains `n` negative samples, where 
- *                                                                   each sample is an index into the vocabulary.
- *                                                                   The caller is responsible for deallocating this memory 
- *                                                                   to avoid memory leaks
+ * @return Collective<E> - Returns an instance of templated composite type.   
+ *                         The composite encapsulates an array of negative samples and the size of the array of negative samples
+ *                          
  */
 template <typename E = cc_tokenizer::string_character_traits<char>::size_type>
 Collective<E> generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = CBOW_NUMBER_OF_NEGATIVE_SAMPLES) throw (ala_exception)
