@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[])
 { 
-    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output, arg_ns, arg_w2_transpose;
+    ARG arg_corpus, arg_epoch, arg_help, arg_lr, arg_rs, arg_verbose, arg_w1, arg_w2, arg_input, arg_output, arg_ns, arg_w2_transpose, arg_average;
     cc_tokenizer::csv_parser<cc_tokenizer::String<char>, char> argsv_parser(cc_tokenizer::String<char>(COMMAND));
     
     cc_tokenizer::String<char> training_data;
@@ -40,8 +40,8 @@ int main(int argc, char* argv[])
     FIND_ARG(argv, argc, argsv_parser, "output", arg_output);
     FIND_ARG(argv, argc, argsv_parser, "ns", arg_ns);
     FIND_ARG(argv, argc, argsv_parser, "--w2-t", arg_w2_transpose);
-
-
+    FIND_ARG(argv, argc, argsv_parser, "--average-of-w1-w2-t", arg_average);
+    
     if (arg_output.i)
     {
         FIND_ARG_BLOCK(argv, argc, argsv_parser, arg_output);
@@ -275,19 +275,21 @@ int main(int argc, char* argv[])
     
         if (arg_w2_transpose.i)
         {
-            cc_tokenizer::String<char> original_name = cc_tokenizer::String<char>(argv[arg_output.i + 2]);
+            cc_tokenizer::String<char> w2_name;
+            cc_tokenizer::String<char> w2_ext;
+            cc_tokenizer::String<char> transposed_name = cc_tokenizer::String<char>(argv[arg_output.i + 2]);
 
-            cc_tokenizer::string_character_traits<char>::size_type pos = original_name.find('.', 0);
+            cc_tokenizer::string_character_traits<char>::size_type pos = transposed_name.find('.', 0);
 
             if (pos != cc_tokenizer::String<char>::npos)
             {                
-                cc_tokenizer::String<char> name = original_name.substr(0, pos);
-                cc_tokenizer::String<char> ext = original_name.substr(pos, original_name.size() - pos);                
-                original_name = name + cc_tokenizer::String<char>("-transposed") + ext;                
+                /*cc_tokenizer::String<char>*/ w2_name = transposed_name.substr(0, pos);
+                /*cc_tokenizer::String<char>*/ w2_ext = transposed_name.substr(pos, transposed_name.size() - pos);                
+                transposed_name = w2_name + cc_tokenizer::String<char>("-transposed") + w2_ext;                
             }
             else 
             {
-                original_name = original_name + cc_tokenizer::String<char>("-transposed");
+                transposed_name = cc_tokenizer::String<char>("transposed-") + transposed_name;
             }
             
             Collective<double> W2_best_transposed = Numcy::zeros(W1_best.getShape());
@@ -302,9 +304,36 @@ int main(int argc, char* argv[])
                     }
                 }
 
-                WRITE_W_BIN(W2_best_transposed, original_name.c_str(), double);
+                WRITE_W_BIN(W2_best_transposed, transposed_name.c_str(), double);
 
-                std::cout<< "W2 weights transposed and saved to file \"" << original_name.c_str() << "\"" ;
+                std::cout<< "W2 weights transposed and saved to file \"" << transposed_name.c_str() << "\"" ;
+
+                if (arg_average.i)
+                {
+                    cc_tokenizer::String<char> averaged_name = cc_tokenizer::String<char>(argv[arg_output.i + 1]);
+                    pos = averaged_name.find('.', 0);
+
+                    if (pos != cc_tokenizer::String<char>::npos)
+                    {
+                        cc_tokenizer::String<char> w1_name = averaged_name.substr(0, pos);
+                        cc_tokenizer::String<char> w1_ext = averaged_name.substr(pos, averaged_name.size() - pos);                
+                        averaged_name = w1_name + cc_tokenizer::String<char>("-averaged") /*+ cc_tokenizer::String<char>("-") + w2_name + cc_tokenizer::String<char>("-transposed") + cc_tokenizer::String<char>("-averaged")*/ + w1_ext;
+                    }        
+                    else 
+                    {
+                        averaged_name = cc_tokenizer::String<char>("averaged-") + averaged_name;  
+                    }
+
+                    Collective<double> sum = W1_best + W2_best_transposed;
+                    cc_tokenizer::string_character_traits<char>::size_type divisor_constant = 2;
+                    Collective<cc_tokenizer::string_character_traits<char>::size_type> divisor = Collective<cc_tokenizer::string_character_traits<char>::size_type> {&divisor_constant, DIMENSIONS{1, 1, NULL, NULL}};
+
+                    Collective<double> average = sum / divisor;
+
+                    WRITE_W_BIN(average, averaged_name.c_str(), double);
+
+                    std::cout<< std::endl << "W1 and W2-transposed weights averaged and saved to file \"" << averaged_name.c_str() << "\"" << std::endl;
+                }
             }
             catch (ala_exception& e)
             {
@@ -312,6 +341,6 @@ int main(int argc, char* argv[])
             }
         }        
     }
-                
+
     return 0;
 }

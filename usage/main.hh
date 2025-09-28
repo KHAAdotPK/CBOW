@@ -53,6 +53,7 @@ input --input (Input filenames for partially trained weights during training)\n\
 output --output (Output filenames for storing trained weights after training)\n\
 rs --rs (Sets regularization strength to prevent overfitting; set to 0 if not using this option)\n\
 --w2-t --w2-transpose --w2-swap-axes --w2-axis-flip --reshape-w2 --w2_row_to_col --w2-flip (Transposes W2 weight matrix)\n\
---ns ns --negative-samples (Number of negative samples from corpus/vocabulary; set to 0 if not using this option)\n"
+--ns ns --negative-samples (Number of negative samples from corpus/vocabulary; set to 0 if not using this option)\n\
+average --average --average-of-w1-w2-t (Creates a new file which has average of two embeddings)\n"
 
 #endif

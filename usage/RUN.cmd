@@ -38,6 +38,7 @@ set error_message_text=
 set help_option=
 set validation_corpus_option=
 set w2_transpose_option=
+set average_option=
 
 :start_parsing_args
 
@@ -45,6 +46,10 @@ if "%1"=="verbose" (
     set verbose_option=verbose
     shift
     goto :start_parsing_args
+) else if "%1"=="average" (
+    set average_option="%1"
+    shift
+    goto :start_parsing_args    
 ) else if "%1"=="--w2-t" (
    set w2_transpose_option="--w2_row_to_col"
    shift
@@ -151,7 +156,7 @@ if "%1"=="verbose" (
    goto :start_parsing_args
 )
 
-@ .\cow.exe corpus %corpus_filename_option% lr %learning_rate_option% epoch %epochs_option% rs %regularization_strength_option% %verbose_option% %input_option% %output_option% %output_w1_filename_option% %output_w2_filename_option% w1 %w1_filename_option% w2 %w2_filename_option% %help_option% %validation_corpus_option% %w2_transpose_option% %negative_samples_option%
+@ .\cow.exe corpus %corpus_filename_option% lr %learning_rate_option% epoch %epochs_option% rs %regularization_strength_option% %verbose_option% %input_option% %output_option% %output_w1_filename_option% %output_w2_filename_option% w1 %w1_filename_option% w2 %w2_filename_option% %help_option% %validation_corpus_option% %w2_transpose_option% %negative_samples_option% %average_option%
 goto :eof
 
 :build
