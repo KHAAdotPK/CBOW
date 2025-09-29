@@ -1347,7 +1347,7 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
             The resulting vector (u) is passed through a softmax function to obtain the predicted probabilities (y_pred). 
             The softmax function converts the raw scores into probabilities.
          */
-        Collective<E> y_pred = softmax<E>(u);
+        Collective<E> y_pred = /*softmax<E>(u)*/ Numcy::sigmoid<E>(u);
 
         Collective<E> h_negative, u_negative, y_pred_negative;
 
@@ -1355,7 +1355,7 @@ forward_propogation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
         {
             h_negative = Numcy::mean(W1, negative_context);
             u_negative = Numcy::dot(h_negative, W2);
-            y_pred_negative = softmax(u_negative);
+            y_pred_negative = /*softmax(u_negative)*/ Numcy::sigmoid<E>(u_negative);
         }
 
         return forward_propogation<E>{h, y_pred, u, h_negative, y_pred_negative, u_negative,};

@@ -464,13 +464,19 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
         ------------------------------
         ---------------------------------
 
+        Collective<E> y_pred = Numcy::sigmoid<E>(u) /*softmax<E>(u)*/;
+
+        --------------------------
+        ------------------------------
+        ---------------------------------
+
         Collective<E> h_negative, u_negative, y_pred_negative;
 
         if (negative_context.getShape().getN())
         {
             h_negative = Numcy::mean(W1, negative_context);
             u_negative = Numcy::dot(h_negative, W2);
-            y_pred_negative = softmax(u_negative); // TODO, replace with sigmoid()
+            y_pred_negative = Numcy::sigmoid(u_negative) /*softmax(u_negative)*/; 
         }
 
         return forward_propagation<E>{h, y_pred, u, h_negative, y_pred_negative, u_negative,};
