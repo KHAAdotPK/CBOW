@@ -464,7 +464,7 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
         ------------------------------
         ---------------------------------
 
-        Collective<E> y_pred = Numcy::sigmoid<E>(u) /*softmax<E>(u)*/;
+        Collective<E> y_pred = Numcy::sigmoid<E>(u_positive) /*softmax<E>(u)*/;
 
         --------------------------
         ------------------------------
