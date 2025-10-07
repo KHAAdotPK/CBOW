@@ -1060,8 +1060,6 @@ Collective<E> generateNegativeSamples_cbow(CORPUS_REF vocab, WORDPAIRS_PTR pair,
     return Collective<E> {ptr, DIMENSIONS{n, 1, NULL, NULL}};    
 }
 
-
-
 template <typename E = cc_tokenizer::string_character_traits<char>::size_type>
 cc_tokenizer::string_character_traits<char>::size_type* generateNegativeSamples_skip_gram(CORPUS_REF vocab, WORDPAIRS_PTR pair, E n = (SKIP_GRAM_WINDOW_SIZE*2 + 1)) throw (ala_exception)
 {
@@ -1131,12 +1129,20 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
 {
     if (pair == NULL)
     {
-        throw ala_exception("forward() Error: Null pointer passed, expected a valid WORDPAIRS_PTR.");
+        throw ala_exception("forward(Collective<E>&, Collective<E>&, Collective<cc_tokenizer::string_character_traits<char>::size_type>&, CORPUS_REF, WORDPAIRS_PTR) Error: Null pointer passed, expected a valid WORDPAIRS_PTR. Required for context word processing.");
     }
 
     cc_tokenizer::string_character_traits<char>::size_type* ptr = NULL;
     cc_tokenizer::string_character_traits<char>::size_type n = 0, j = 0;
 
+    /*
+     * Counts valid context words by scanning both left and right context windows.
+     * Valid words are those with indices >= INDEX_ORIGINATES_AT_VALUE, indicating 
+     * they are actual vocabulary entries rather than padding tokens.
+     * 
+     * The count 'n' determines the size of the context array used for computing
+     * the hidden layer vector through embedding averaging.
+     */
     /*
         Counting Valid Context Words:
         --------------------------------
@@ -1200,6 +1206,12 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
     try
     {
         /*
+         * Allocates memory for context word indices.
+         * The array stores indices of valid context words after adjusting for 
+         * INDEX_ORIGINATES_AT_VALUE offset. Maximum possible size is 2 * SKIP_GRAM_WINDOW_SIZE
+         * (left + right contexts).
+         */
+        /*
             Allocating Memory for Context Words:
             ---------------------------------------
             Allocate memory for the context array (ptr) based on the number of valid context words (n).
@@ -1208,6 +1220,11 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
          */
         ptr = cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().allocate(/* At most it will be SKIP_GRAM_WINDOW_SIZE*2 */ n);
 
+        /*
+         * Populates context array with adjusted indices of valid context words.
+         * Index adjustment: subtracts INDEX_ORIGINATES_AT_VALUE to convert from 
+         * corpus indices to embedding matrix indices.
+         */
         /*
             Storing Context Words:
             -------------------------
@@ -1233,6 +1250,11 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
                 j = j + 1;
             }            
         }
+
+        /*
+         * Creates Collective container for context indices to enable batch operations.
+         * Dimensions: {n, 1} where n is the count of valid context words.
+         */
         /*
             Creating a Collective Object for Context Words:
             --------------------------------------------------
@@ -1242,6 +1264,11 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
          */    
         Collective<cc_tokenizer::string_character_traits<char>::size_type> context = Collective<cc_tokenizer::string_character_traits<char>::size_type>{ptr, DIMENSIONS{n, 1, NULL, NULL}};
 
+        /*
+         * Computes hidden layer vector (h) by averaging context word embeddings.
+         * For CBOW: h = mean(embeddings of all context words)
+         * Shape: (1, EMBEDDING_DIM) - single row vector representing the combined context
+         */
         /*
             Computing the Hidden Layer Vector (h):
             -----------------------------------------
@@ -1262,20 +1289,29 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
         */
         Collective<E> h = Numcy::mean(W1, context);
 
-        Collective<E> W2_positive;
-        Collective<E> u_positive;
-        Collective<E> y_pred_positive;
+        Collective<E> W2_positive; // Embedding vector for the positive (center) word. Vocabulary vector of one positive sample       
+        Collective<E> u_positive; // Vector of scores. Raw score before activation
+        Collective<E> y_pred_positive; // Vector of probabilities. Probability after activation 
 
+        // The core idea is moving from one complex question to many simple one, one positive sample and k negative samples
+        /*
+         * Two operational modes:
+         * 1. With negative sampling: Treats as binary classification (positive vs negative samples)
+         * 2. Without negative sampling: Uses softmax over entire vocabulary
+         */
         if (negative_context.getShape().getN())
         {
-            W2_positive = W2.slice(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, DIMENSIONS{1, W2.getShape().getNumberOfRows(), NULL, NULL}, AXIS_ROWS); 
-            u_positive = Numcy::dot(h, W2_positive);
-            y_pred_positive = Numcy::sigmoid<E>(u_positive);
+            // Negative sampling mode - binary classification
+            W2_positive = W2.slice(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, DIMENSIONS{1, W2.getShape().getNumberOfRows(), NULL, NULL}, AXIS_ROWS); // Part of vocabulary
+            u_positive = Numcy::dot(h, W2_positive); // Scores of series of simple, independent "Yes/No" questions
+            y_pred_positive = Numcy::sigmoid<E>(u_positive); // Classify which 
         }
         else
         {
-            u_positive = Numcy::dot(h, W2);
-            y_pred_positive = Numcy::sigmoid<E>(u_positive);
+            // Full softmax mode - multi-class classification over vocabulary
+            u_positive = Numcy::dot(h, W2); // A huge vector of scores, one for each word in the vocabulary.
+            y_pred_positive = /*Numcy::sigmoid<E>(u_positive)*/ Numcy::softmax(u_positive); // Take whole of the vocabulary and find the center/target word of the given context
+            // Say your vocabulary is 10,000 words, then the result is a vector where probabilities[i] gives you the chance that word i is the correct one (the target/center word), and all 10,000 probabilities sum to 1.
         }
 
         
@@ -1333,21 +1369,45 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
          */
                     //Collective<E> y_pred = /*softmax<E>(u)*/ Numcy::sigmoid<E>(u);
 
-        Collective<E> h_negative, u_negative, y_pred_negative;
+        Collective<E> h_negative, u_negative, y_pred_negative, W2_negative;
 
+        /*
+         * Processes negative samples when provided.
+         * Negative samples are incorrect context words used for contrastive learning.
+         */
         if (negative_context.getShape().getN())
         {
-            h_negative = Numcy::mean(W1, negative_context);
+            E* ptr = NULL;
+            ptr = cc_tokenizer::allocator<E>().allocate(W2.getShape().getNumberOfRows()*negative_context.getShape().getN());
+            W2_negative = Collective<E>{ptr, DIMENSIONS{negative_context.getShape().getN(), W2.getShape().getNumberOfRows(), NULL, NULL}};
+
+            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < negative_context.getShape().getN(); i++)
+            {
+                Collective<E> temp = W2.slice(negative_context[i], DIMENSIONS{1, W2.getShape().getNumberOfRows(), NULL, NULL}, AXIS_ROWS);
+                W2_negative.update_column(i, temp);
+            }
+            
+            /*h_negative = Numcy::mean(W1, negative_context);*/
             /*
                 nxm 1x32 
                   mxp 20x32                
                 nxp 1x32  
              */
-            u_negative = Numcy::dot(h_negative, W2); 
+            /*u_negative = Numcy::dot(h_negative, W2);*/
+            /*std::cout<< "h = Columns: " << h.getShape().getNumberOfColumns() << ", Rows: " << h.getShape().getNumberOfRows() << std::endl;
+            std::cout<< "W2_negative = Columns: " << W2_negative.getShape().getNumberOfColumns() << ", Rows: " << W2_negative.getShape().getNumberOfRows() << std::endl;*/
+            u_negative = Numcy::dot(h, W2_negative); 
             y_pred_negative = /*softmax(u_negative)*/ Numcy::sigmoid<E>(u_negative);
         }
 
-        return forward_propagation<E>{h, y_pred_positive, u_positive, /*h_negative,*/ y_pred_negative, u_negative,};
+        // Return all computed values for use in backpropagation and loss calculation
+        return forward_propagation<E>{h, // Hidden layer representation
+                                      y_pred_positive, // Positive sample probability
+                                      u_positive, // Positive sample raw scores  
+                                      /*h_negative,*/  
+                                      y_pred_negative, // Negative sample probabilities
+                                      u_negative, // Negative sample raw scores
+                                    };
     }
     catch(std::bad_alloc& e)
     {
@@ -1675,20 +1735,20 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
         else
         {
             grad_u_positive = fp.predicted_probabilities - 1.0;
-            grad_u_negative = fp.negative_predicted_probabilities - 0.0;
+            grad_u_negative = fp.negative_predicted_probabilities - 0.0;                        
             grad_W2 = Numcy::zeros(W2.getShape()); 
-            grad_W2_positive = Numcy::outer(fp.hidden_layer_vector, grad_u_positive); 
+            grad_W2_positive = Numcy::outer(fp.hidden_layer_vector, grad_u_positive);                         
             /*std::cout<< "grad_W2 = " << grad_W2.getShape().getNumberOfColumns() << ", " << grad_W2.getShape().getNumberOfRows() << std::endl;
             std::cout<< "grad_u_positive = " << grad_u_positive.getShape().getNumberOfColumns() << ", " << grad_u_positive.getShape().getNumberOfRows() << std::endl;
             std::cout<< "fp.hidden_layer_vector = " << fp.hidden_layer_vector.getShape().getNumberOfColumns() << ", " << fp.hidden_layer_vector.getShape().getNumberOfRows() << std::endl;*/            
-            grad_W2.update_column(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, /*grad_W2_positive*/ fp.hidden_layer_vector*grad_u_positive);
+            grad_W2.update_column(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, /*grad_W2_positive*/ fp.hidden_layer_vector*grad_u_positive);            
             for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < negative_context.getShape().getN(); i++)
             {
                 /*std::cout<< "--> " << negative_context[i] << std::endl;
                 std::cout<< "=======>>>>>>> " << grad_u_negative[negative_context[i]] << std::endl;*/
-                grad_W2.update_column(negative_context[i], fp.hidden_layer_vector*grad_u_negative[negative_context[i]]); 
+                grad_W2.update_column(negative_context[i], fp.hidden_layer_vector*grad_u_negative[/*negative_context[*/i/*]*/]); 
            }
-
+           
            grad_h = Numcy::zeros(fp.hidden_layer_vector.getShape());
            Collective<T> W2_positive_vec = W2.slice(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, DIMENSIONS{W2.getShape().getNumberOfRows(), 1, NULL, NULL}, AXIS_ROWS);
            Collective<T> foo = W2_positive_vec * grad_u_positive;
