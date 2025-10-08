@@ -1794,10 +1794,12 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
             std::cout<< "fp.hidden_layer_vector = " << fp.hidden_layer_vector.getShape().getNumberOfColumns() << ", " << fp.hidden_layer_vector.getShape().getNumberOfRows() << std::endl;*/
             /*
              * 1.1. Add this gradient to the correct row in grad_W2
-             */            
+             * Get the scalar error value from the 1x1 Collective grad_u_positive, because "*" is overloaded for Collective instances so you do not explcitly have to do grad_u_positive[0]
+             * Perform scalar-vector multiplication. Add this column gradient to the correct column in grad_W2
+             */                        
             grad_W2.update_column(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, /*grad_W2_positive*/ fp.hidden_layer_vector*grad_u_positive);
             /*
-             * 2. Loop through and update for each negative word   
+             * 2. Loop through and update for each negative word  and repeat the above mentioned process for each negative context 
              */            
             for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < negative_context.getShape().getN(); i++)
             {
