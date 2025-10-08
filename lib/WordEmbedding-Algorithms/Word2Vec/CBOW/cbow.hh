@@ -1287,6 +1287,15 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
             For CBOW, h is the average of the embeddings of the context words. 
             This involves accessing the embeddings for all context words and averaging them.
         */
+        /*
+         *  In a single CBOW training step, the context words are fixed.
+         *  Whether you are checking the real "positive" center word or a fake "negative" one, the context does not change.
+         *  h is calculated from the true context words only once per new pair. This single h vector is then used to evaluate the positive word Aand all the negative words.
+         *  Shape: (1, EMBEDDING_DIM) or (1, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE) - single row vector representing the combined context. 
+         *  From the point of view of Negative Sampling...
+         *  The main goal of negative sampling is to avoid calculations involving the entire W2 matrix, and to achieve that...
+         *  The correct approach is to perform dot products only between single hidden vector h and the specific vectors for the chosen words (1 positive + k negative)
+         */
         Collective<E> h = Numcy::mean(W1, context);
 
         Collective<E> W2_positive; // Embedding vector for the positive (center) word. Vocabulary vector of one positive sample       
@@ -1386,12 +1395,23 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
                 Collective<E> temp = W2.slice(negative_context[i], DIMENSIONS{1, W2.getShape().getNumberOfRows(), NULL, NULL}, AXIS_ROWS);
                 W2_negative.update_column(i, temp);
             }
-            
-            /*h_negative = Numcy::mean(W1, negative_context);*/
+                        
             /*
-                nxm 1x32 
-                  mxp 20x32                
-                nxp 1x32  
+             *  ROWSxCOLUMNS
+             *  ------------ 
+             *   nxm 1x32 
+             *     mxp 32x10                
+             *   nxp 1x10 
+             *   
+             *   Because:
+             *      // negative_samples is an array of k word indices
+             *      Collective<E> u_negative_scores(k); // A vector to hold the k scores
+             *   
+             *      for (int i = 0; i < k; ++i)
+             *      {
+             *          Collective<E> negative_word_vec = W2.getRow(negative_samples[i]);
+             *          u_negative_scores[i] = Numcy::dot(h, negative_word_vec);
+             *      }
              */
             /*u_negative = Numcy::dot(h_negative, W2);*/
             /*std::cout<< "h = Columns: " << h.getShape().getNumberOfColumns() << ", Rows: " << h.getShape().getNumberOfRows() << std::endl;
