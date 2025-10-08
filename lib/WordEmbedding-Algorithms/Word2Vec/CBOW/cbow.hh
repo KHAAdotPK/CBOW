@@ -1308,11 +1308,15 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
          * 1. With negative sampling: Treats as binary classification (positive vs negative samples)
          * 2. Without negative sampling: Uses softmax over entire vocabulary
          */
-        if (negative_context.getShape().getN())
-        {
-            // Negative sampling mode - binary classification
+        if (negative_context.getShape().getN()) // Negative sampling mode - binary classification
+        {            
+            /*
+             *   he Dot Product Is with Specific Word Vectors, Not All of W2.
+             *   The main goal of negative sampling is to avoid calculations involving the entire W2 matrix                
+             */
             W2_positive = W2.slice(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, DIMENSIONS{1, W2.getShape().getNumberOfRows(), NULL, NULL}, AXIS_ROWS); // Part of vocabulary
             u_positive = Numcy::dot(h, W2_positive); // Scores of series of simple, independent "Yes/No" questions
+            // Now, apply the sigmoid function to the single positive score
             y_pred_positive = Numcy::sigmoid<E>(u_positive); // Classify which 
         }
         else
@@ -1388,7 +1392,15 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
         {
             E* ptr = NULL;
             ptr = cc_tokenizer::allocator<E>().allocate(W2.getShape().getNumberOfRows()*negative_context.getShape().getN());
+
+            /*
+             *   he Dot Product Is with Specific Word Vectors, Not All of W2.
+             *   The main goal of negative sampling is to avoid calculations involving the entire W2 matrix                
+             */
             W2_negative = Collective<E>{ptr, DIMENSIONS{negative_context.getShape().getN(), W2.getShape().getNumberOfRows(), NULL, NULL}};
+
+            /*std::cout<< "Shape of W2: Columns = " << W2.getShape().getNumberOfColumns() << ", Rows = " << W2.getShape().getNumberOfRows() << std::endl;
+            std::cout<< "Shape of W2_negative: Columns = " << W2_negative.getShape().getNumberOfColumns() << ", Rows = " << W2_negative.getShape().getNumberOfRows() << std::endl;*/
 
             for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < negative_context.getShape().getN(); i++)
             {
@@ -1417,6 +1429,7 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
             /*std::cout<< "h = Columns: " << h.getShape().getNumberOfColumns() << ", Rows: " << h.getShape().getNumberOfRows() << std::endl;
             std::cout<< "W2_negative = Columns: " << W2_negative.getShape().getNumberOfColumns() << ", Rows: " << W2_negative.getShape().getNumberOfRows() << std::endl;*/
             u_negative = Numcy::dot(h, W2_negative); 
+            // Now, apply the sigmoid function to the k negative scores
             y_pred_negative = /*softmax(u_negative)*/ Numcy::sigmoid<E>(u_negative);
         }
 
@@ -1754,14 +1767,38 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
         }
         else
         {
+            /*
+             * Calculate the error signal for the true, positive center word. The "target" label for this word is 1.
+             * fp.predicted_probabilities is the sigmoid output for the positive word (a single value)
+             * The target is 1.0
+             */
             grad_u_positive = fp.predicted_probabilities - 1.0;
-            grad_u_negative = fp.negative_predicted_probabilities - 0.0;                        
+            /*
+             * Calculate the error signals for each of the k negative samples. The "target" label for all these fake words is 0.
+             * Since subtracting zero does nothing, the error signals are simply the predicted probabilities themselves   
+             */
+            grad_u_negative = fp.negative_predicted_probabilities /*- 0.0*/;
+
+            /*
+             * Calculate the Gradient for W2 (Sparse Update):
+             * Instead of calculating a dense gradient for the entire W2 matrix, we now only calculate updates for the rows we actually used: the one positive word and the k negative words.
+             * Action: Initialize grad_W2 as a matrix of zeros. Then, calculate the gradient for each relevant word vector (error * h) and add it to the corresponding row in grad_W2  
+             */
             grad_W2 = Numcy::zeros(W2.getShape()); 
+            /*
+             *  1. Update for the positive word             
+             */
             grad_W2_positive = Numcy::outer(fp.hidden_layer_vector, grad_u_positive);                         
             /*std::cout<< "grad_W2 = " << grad_W2.getShape().getNumberOfColumns() << ", " << grad_W2.getShape().getNumberOfRows() << std::endl;
             std::cout<< "grad_u_positive = " << grad_u_positive.getShape().getNumberOfColumns() << ", " << grad_u_positive.getShape().getNumberOfRows() << std::endl;
-            std::cout<< "fp.hidden_layer_vector = " << fp.hidden_layer_vector.getShape().getNumberOfColumns() << ", " << fp.hidden_layer_vector.getShape().getNumberOfRows() << std::endl;*/            
-            grad_W2.update_column(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, /*grad_W2_positive*/ fp.hidden_layer_vector*grad_u_positive);            
+            std::cout<< "fp.hidden_layer_vector = " << fp.hidden_layer_vector.getShape().getNumberOfColumns() << ", " << fp.hidden_layer_vector.getShape().getNumberOfRows() << std::endl;*/
+            /*
+             * 1.1. Add this gradient to the correct row in grad_W2
+             */            
+            grad_W2.update_column(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, /*grad_W2_positive*/ fp.hidden_layer_vector*grad_u_positive);
+            /*
+             * 2. Loop through and update for each negative word   
+             */            
             for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < negative_context.getShape().getN(); i++)
             {
                 /*std::cout<< "--> " << negative_context[i] << std::endl;
@@ -1769,16 +1806,30 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
                 grad_W2.update_column(negative_context[i], fp.hidden_layer_vector*grad_u_negative[/*negative_context[*/i/*]*/]); 
            }
            
+           /*
+            * Calculate the Gradient for the Hidden Layer h
+            * The gradient grad_h is the sum of the errors propagated back from all the output neurons we used (1 positive + k negative).
+            * 1. Initialize grad_h with zeros
+            */
            grad_h = Numcy::zeros(fp.hidden_layer_vector.getShape());
-           Collective<T> W2_positive_vec = W2.slice(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, DIMENSIONS{W2.getShape().getNumberOfRows(), 1, NULL, NULL}, AXIS_ROWS);
-           Collective<T> foo = W2_positive_vec * grad_u_positive;
-           grad_h = grad_h + foo /*(grad_u_positive * W2_positive_vec))*/;
 
+           /*
+            * 2. Propagate error from the positive word.
+            * 2.1 Start with getting positive word vector
+            */
+           Collective<T> W2_positive_vec = W2.slice(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, DIMENSIONS{W2.getShape().getNumberOfRows(), 1, NULL, NULL}, AXIS_ROWS);
+           Collective<T> temp = W2_positive_vec * grad_u_positive;
+           grad_h = grad_h + temp /*(grad_u_positive * W2_positive_vec))*/;
+
+           /*
+            * 3. Loop and propagate error from negative words
+            * 3.1 Start with get negative word vector/s
+            */
            for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < negative_context.getShape().getN(); i++)
            {
                 Collective<T> W2_negative_vec = W2.slice(negative_context[i], DIMENSIONS{W2.getShape().getNumberOfRows(), 1, NULL, NULL}, AXIS_ROWS);
-                foo = W2_negative_vec * grad_u_negative[i];
-                grad_h = grad_h + foo;
+                temp = W2_negative_vec * grad_u_negative[i];
+                grad_h = grad_h + temp;
            }
         }
        
@@ -1824,7 +1875,10 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
         //std::cout<< grad_u_T.getShape().getNumberOfColumns() << " -- " << grad_u_T.getShape().getNumberOfRows() << std::endl;
                     /*grad_h = Numcy::dot(W2, grad_u_T);*/
         //std::cout<< grad_h.getShape().getNumberOfColumns() << " -- " << grad_h.getShape().getNumberOfRows() << std::endl;
-                
+        
+        /*
+         * Calculate the Gradient for W1
+         */
         grad_W1 = Numcy::zeros<T>(DIMENSIONS{SKIP_GRAM_EMBEDDING_VECTOR_SIZE, vocab.numberOfUniqueTokens(), NULL, NULL});
         /*std::cout<< grad_W1.getShape().getNumberOfColumns() << " -- " << grad_W1.getShape().getNumberOfRows() << std::endl;
         for (int i = 0; i < grad_W1.getShape().getN(); i++)
@@ -1879,7 +1933,7 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
     }
     catch (ala_exception& e)
     {
-        throw ala_exception(cc_tokenizer::String<char>("backward() -> ") + cc_tokenizer::String<char>(e.what()));
+        throw ala_exception(cc_tokenizer::String<char>("backward(Collective<T>&, Collective<T>&, Collective<cc_tokenizer::string_character_traits<char>::size_type>&, CORPUS_REF, forward_propagation<T>&, WORDPAIRS_PTR, bool) -> ") + cc_tokenizer::String<char>(e.what()));
     }
 
     /*
