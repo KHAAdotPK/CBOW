@@ -2180,6 +2180,7 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
         {\
             /* Get Current Word Pair: We've a pair, a pair is LEFT_CONTEXT_WORD/S CENTER_WORD and RIGHT_CONTEXT_WORD/S */\
             WORDPAIRS_PTR pair = pairs.get_current_word_pair();\
+            /* We are not using negative sampling, that is why the following redeclartion */\
             Collective<cc_tokenizer::string_character_traits<char>::size_type> negative_samples /*= generateNegativeSamples_cbow(vocab, pair, static_cast<cc_tokenizer::string_character_traits<char>::size_type>(CBOW_NEGATIVE_SAMPLE_SIZE))*/;\
             try\
             {\
