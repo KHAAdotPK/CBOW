@@ -1302,7 +1302,13 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
         Collective<E> u_positive; // Vector of scores. Raw score before activation
         Collective<E> y_pred_positive; // Vector of probabilities. Probability after activation 
 
-        // The core idea is moving from one complex question to many simple one, one positive sample and k negative samples
+        /*
+         * The core idea is moving from one complex question to many simple one, one positive sample and k negative samples.
+         * With negative sampling, you are not performing a single multi-class classification (like with softmax). 
+         * Instead, you're performing multiple binary classifications:
+         * 1. Is the center word the actual target word? (This should be true, label = 1)
+         * 2. Is the center word one of the negative samples? (This should be false for each one, label = 0)
+         */
         /*
          * Two operational modes:
          * 1. With negative sampling: Treats as binary classification (positive vs negative samples)
@@ -1311,13 +1317,19 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
         if (negative_context.getShape().getN()) // Negative sampling mode - binary classification
         {            
             /*
-             *   he Dot Product Is with Specific Word Vectors, Not All of W2.
-             *   The main goal of negative sampling is to avoid calculations involving the entire W2 matrix                
+             *  1. The Dot Product Is with Specific Word Vectors, Not All of W2.
+             *     The main goal of negative sampling is to avoid calculations involving the entire W2 matrix                
              */
             W2_positive = W2.slice(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, DIMENSIONS{1, W2.getShape().getNumberOfRows(), NULL, NULL}, AXIS_ROWS); // Part of vocabulary
+            /*
+             * 1.1. It should compute the dot product of the hidden layer vector h with the output vectors for the true center word...
+             */
             u_positive = Numcy::dot(h, W2_positive); // Scores of series of simple, independent "Yes/No" questions
             // Now, apply the sigmoid function to the single positive score
-            y_pred_positive = Numcy::sigmoid<E>(u_positive); // Classify which 
+            /*
+             * 1.2. It should compute the dot product of the hidden layer vector h with the output vectors for the true center word and then apply a sigmoid to the result
+             */
+            y_pred_positive = Numcy::sigmoid<E>(u_positive); // Is the center word the actual target word? (This should be true, label = 1)
         }
         else
         {
@@ -1382,6 +1394,18 @@ forward_propagation<E> forward(Collective<E>& W1, Collective<E>& W2, Collective<
          */
                     //Collective<E> y_pred = /*softmax<E>(u)*/ Numcy::sigmoid<E>(u);
 
+        /*
+         * The core idea is moving from one complex question to many simple one, one positive sample and k negative samples.
+         * With negative sampling, you are not performing a single multi-class classification (like with softmax). 
+         * Instead, you're performing multiple binary classifications:
+         * 1. Is the center word the actual target word? (This should be true, label = 1)
+         * 2. Is the center word one of the negative samples? (This should be false for each one, label = 0)
+         */
+        /*
+         * Two operational modes:
+         * 1. With negative sampling: Treats as binary classification (positive vs negative samples)
+         * 2. Without negative sampling: Uses softmax over entire vocabulary
+         */           
         Collective<E> h_negative, u_negative, y_pred_negative, W2_negative;
 
         /*
@@ -1721,6 +1745,11 @@ backward_propagation<T> backward_new(Collective<T>& W1, Collective<T>& W2, CORPU
 template <typename T = double>
 backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collective<cc_tokenizer::string_character_traits<char>::size_type>& negative_context, CORPUS_REF vocab, forward_propagation<T>& fp, WORDPAIRS_PTR pair, bool verbose = false) throw (ala_exception)
 {
+    if (pair == NULL)
+    {
+        throw ala_exception("bacward(Collective<T>&, Collective<T>&, Collective<cc_tokenizer::string_character_traits<char>::size_type>&, CORPUS_REF, forward_propagation<T>&, WORDPAIRS_PTR, bool) Error: Null pointer passed, expected a valid WORDPAIRS_PTR. Required for context word processing.");
+    }
+
     /* The hot one array is row vector, and has shape (1, vocab.len = REPLIKA_VOCABULARY_LENGTH a.k.a no redundency) */
     Collective<T> oneHot;
     /* The shape of grad_u is the same as y_pred (fp.predicted_probabilities) which is (1, len(vocab) without redundency) */
@@ -1746,8 +1775,40 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
         Dimensions of grad_W1 is (len(vocab) without redundency, SKIP_GRAM_EMBEDDNG_VECTOR_SIZE)
      */
     Collective<T> grad_W1, grad_W2;
-    
 
+    cc_tokenizer::string_character_traits<char>::size_type n = 0;
+
+    /*
+     *  Counting Valid Context Words:
+     *  --------------------------------
+     *  The following loop calculates the number of context words in the pair that are not padding tokens.
+     *  This information is used to determine the size of the context array (ptr) that stores the indices of the context words.
+     *  The context array is used to compute the hidden layer vector (h) by averaging the embeddings of the context words
+     * 
+     *  INDEX_ORIGINATES_AT_VALUE IS a threshold to determine if a word index is valid.  
+     *  "n" keeps track of the total number of valid context words
+     */    
+    for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < SKIP_GRAM_WINDOW_SIZE; i++)
+    {
+        if ((*(pair->getLeft()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+        {
+            n = n + 1;             
+        }
+        else
+        {
+            // Unnecessary
+        } 
+                    
+        if ((*(pair->getRight()))[i] >= INDEX_ORIGINATES_AT_VALUE)
+        {
+            n = n + 1;             
+        }
+        else 
+        {
+            // Unnecessary
+        }        
+    }
+    
     /*
         Creating a One-Hot Vector, using Numcy::zeros with a shape of (1, vocab.numberOfUniqueTokens()).
         This creates a zero-filled column vector with a length equal to the vocabulary size
@@ -1788,10 +1849,11 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
             /*
              *  1. Update for the positive word             
              */
-            grad_W2_positive = Numcy::outer(fp.hidden_layer_vector, grad_u_positive);                         
-            /*std::cout<< "grad_W2 = " << grad_W2.getShape().getNumberOfColumns() << ", " << grad_W2.getShape().getNumberOfRows() << std::endl;
-            std::cout<< "grad_u_positive = " << grad_u_positive.getShape().getNumberOfColumns() << ", " << grad_u_positive.getShape().getNumberOfRows() << std::endl;
-            std::cout<< "fp.hidden_layer_vector = " << fp.hidden_layer_vector.getShape().getNumberOfColumns() << ", " << fp.hidden_layer_vector.getShape().getNumberOfRows() << std::endl;*/
+            grad_W2_positive = Numcy::outer(fp.hidden_layer_vector, grad_u_positive); 
+            /*std::cout<< "W2: Columns = " << W2.getShape().getNumberOfColumns() << ", Rows = " << W2.getShape().getNumberOfRows() << std::endl;                         
+            std::cout<< "grad_W2: Columns = " << grad_W2.getShape().getNumberOfColumns() << ", Rows = " << grad_W2.getShape().getNumberOfRows() << std::endl;
+            std::cout<< "grad_u_positive: Columns = " << grad_u_positive.getShape().getNumberOfColumns() << ", Rows = " << grad_u_positive.getShape().getNumberOfRows() << std::endl;
+            std::cout<< "fp.hidden_layer_vector: Columns = " << fp.hidden_layer_vector.getShape().getNumberOfColumns() << ", Rows = " << fp.hidden_layer_vector.getShape().getNumberOfRows() << std::endl;*/
             /*
              * 1.1. Add this gradient to the correct row in grad_W2
              * Get the scalar error value from the 1x1 Collective grad_u_positive, because "*" is overloaded for Collective instances so you do not explcitly have to do grad_u_positive[0]
@@ -1904,7 +1966,7 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
                 for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < grad_W1.getShape().getNumberOfColumns(); j++)
                 {
                     // Update the specific column of the specific row in grad_W1 by adding the corresponding value from transpose_outer_grad_h_context_ones.
-                    grad_W1[((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / SKIP_GRAM_WINDOW_SIZE);
+                    grad_W1[((*(pair->getLeft()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / n /*SKIP_GRAM_WINDOW_SIZE*/);
                 }
             }
             /*else 
@@ -1923,7 +1985,7 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
                 for (cc_tokenizer::string_character_traits<char>::size_type j = 0; j < grad_W1.getShape().getNumberOfColumns(); j++)
                 {
                     // Update the specific column of the specific row in grad_W1 by adding the corresponding value from transpose_outer_grad_h_context_ones.
-                    grad_W1[((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / SKIP_GRAM_WINDOW_SIZE);
+                    grad_W1[((*(pair->getRight()))[i] - INDEX_ORIGINATES_AT_VALUE)*grad_W1.getShape().getNumberOfColumns() + j] += (grad_h[j] / n /*SKIP_GRAM_WINDOW_SIZE*/);
                 }
             }
             /*else 
@@ -2016,6 +2078,7 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
     /* Epoch loop: Main loop for epochs */\
     for (cc_tokenizer::string_character_traits<char>::size_type i = 1; i <= epoch; i++)\
     {\
+        el = 0;\
         if (verbose)\
         {\
             std::cout<< "Epoch# " << i << " of " << epoch << " epochs." << std::endl;\
@@ -2169,7 +2232,6 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
             }\
         }\
         std::cout<< "epoch_loss = " << el/PAIRS_VOCABULARY_TRAINING_SPLIT(pairs.get_number_of_word_pairs()/**PAIRS_VOCABULARY_TRAINING_SPLIT*/) << std::endl;\
-        el = 0;\
         /*---------------------------------------------------------*/\
         /*  PHASE 2: VALIDATION Weights with the validation data   */\
         /*---------------------------------------------------------*/\
