@@ -265,14 +265,14 @@ int main(int argc, char* argv[])
     CBOW_TRAINING_LOOP(epoch_loss, default_epoch, default_lr, default_rs, default_ns, training_pairs, double, arg_verbose.i ? true : false, training_vocab, W1, W2, W1_best, W2_best);
     
     std::cout<< "Training done!" << std::endl;
-
+    
     if (arg_output.i)
     {                           
         WRITE_W_BIN(W1_best, argv[arg_output.i + 1], double);
         WRITE_W_BIN(W2_best, argv[arg_output.i + 2], double);
-
+        
         std::cout<< "Weights saved to files \"" << argv[arg_output.i + 1] << "\" and \"" << argv[arg_output.i + 2] << "\"" << std::endl;   
-    
+            
         if (arg_w2_transpose.i)
         {
             cc_tokenizer::String<char> w2_name;
@@ -291,9 +291,9 @@ int main(int argc, char* argv[])
             {
                 transposed_name = cc_tokenizer::String<char>("transposed-") + transposed_name;
             }
-            
+                      
             Collective<double> W2_best_transposed = Numcy::zeros(W1_best.getShape());
-
+            
             try 
             {
                 for (cc_tokenizer::string_character_traits<char>::size_type i = 0; i < W2_best.getShape().getNumberOfRows(); i++)
@@ -312,7 +312,7 @@ int main(int argc, char* argv[])
                 {
                     cc_tokenizer::String<char> averaged_name = cc_tokenizer::String<char>(argv[arg_output.i + 1]);
                     pos = averaged_name.find('.', 0);
-
+                   
                     if (pos != cc_tokenizer::String<char>::npos)
                     {
                         cc_tokenizer::String<char> w1_name = averaged_name.substr(0, pos);
@@ -323,16 +323,19 @@ int main(int argc, char* argv[])
                     {
                         averaged_name = cc_tokenizer::String<char>("averaged-") + averaged_name;  
                     }
-
+                                        
                     Collective<double> sum = W1_best + W2_best_transposed;
-                    cc_tokenizer::string_character_traits<char>::size_type divisor_constant = 2;
-                    Collective<cc_tokenizer::string_character_traits<char>::size_type> divisor = Collective<cc_tokenizer::string_character_traits<char>::size_type> {&divisor_constant, DIMENSIONS{1, 1, NULL, NULL}};
 
+                    cc_tokenizer::string_character_traits<char>::size_type* divisor_constant_ptr = cc_tokenizer::allocator<cc_tokenizer::string_character_traits<char>::size_type>().allocate(1);
+                    *divisor_constant_ptr = 2;
+
+                    Collective<cc_tokenizer::string_character_traits<char>::size_type> divisor = Collective<cc_tokenizer::string_character_traits<char>::size_type> {divisor_constant_ptr, DIMENSIONS{1, 1, NULL, NULL}};
+                    
                     Collective<double> average = sum / divisor;
 
                     WRITE_W_BIN(average, averaged_name.c_str(), double);
 
-                    std::cout<< std::endl << "W1 and W2-transposed weights averaged and saved to file \"" << averaged_name.c_str() << "\"" << std::endl;
+                    std::cout<< std::endl << "W1 and W2-transposed weights averaged and saved to file \"" << averaged_name.c_str() << "\"" << std::endl;                    
                 }
             }
             catch (ala_exception& e)
