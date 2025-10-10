@@ -1849,17 +1849,33 @@ backward_propagation<T> backward(Collective<T>& W1, Collective<T>& W2, Collectiv
             /*
              *  1. Update for the positive word             
              */
-            grad_W2_positive = Numcy::outer(fp.hidden_layer_vector, grad_u_positive); 
-            /*std::cout<< "W2: Columns = " << W2.getShape().getNumberOfColumns() << ", Rows = " << W2.getShape().getNumberOfRows() << std::endl;                         
+            grad_W2_positive = Numcy::outer(fp.hidden_layer_vector, grad_u_positive);
+            /*std::cout<< "In backward(): " << std::endl;
+            std::cout<< "W1: Columns = " << W1.getShape().getNumberOfColumns() << ", Rows = " << W1.getShape().getNumberOfRows() << std::endl;
+            std::cout<< "W2: Columns = " << W2.getShape().getNumberOfColumns() << ", Rows = " << W2.getShape().getNumberOfRows() << std::endl;                         
             std::cout<< "grad_W2: Columns = " << grad_W2.getShape().getNumberOfColumns() << ", Rows = " << grad_W2.getShape().getNumberOfRows() << std::endl;
             std::cout<< "grad_u_positive: Columns = " << grad_u_positive.getShape().getNumberOfColumns() << ", Rows = " << grad_u_positive.getShape().getNumberOfRows() << std::endl;
-            std::cout<< "fp.hidden_layer_vector: Columns = " << fp.hidden_layer_vector.getShape().getNumberOfColumns() << ", Rows = " << fp.hidden_layer_vector.getShape().getNumberOfRows() << std::endl;*/
+            std::cout<< "fp.hidden_layer_vector: Columns = " << fp.hidden_layer_vector.getShape().getNumberOfColumns() << ", Rows = " << fp.hidden_layer_vector.getShape().getNumberOfRows() << std::endl;
+            std::cout<< "(fp.hidden_layer_vector*grad_u_positive): Columns = " << (fp.hidden_layer_vector*grad_u_positive).getShape().getNumberOfColumns() << ", Rows = " << (fp.hidden_layer_vector*grad_u_positive).getShape().getNumberOfRows() << std::endl;*/
             /*
              * 1.1. Add this gradient to the correct row in grad_W2
              * Get the scalar error value from the 1x1 Collective grad_u_positive, because "*" is overloaded for Collective instances so you do not explcitly have to do grad_u_positive[0]
              * Perform scalar-vector multiplication. Add this column gradient to the correct column in grad_W2
-             */                        
+             */ 
+            /*Collective<T> temp_temp = grad_W2.slice(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, DIMENSIONS{grad_W2.getShape().getNumberOfRows(), 1, NULL, NULL}, AXIS_ROWS);           
+            for (int i = 0; i < temp_temp.getShape().getN(); i++)
+            {
+                std::cout<< temp_temp[i] << ", ";                
+            }
+            std::cout<< std::endl;*/
             grad_W2.update_column(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, /*grad_W2_positive*/ fp.hidden_layer_vector*grad_u_positive);
+            /*std::cout<< "(fp.hidden_layer_vector*grad_u_positive): Columns = "  <<  (fp.hidden_layer_vector*grad_u_positive).getShape().getNumberOfColumns() << ", Rows = " << (fp.hidden_layer_vector*grad_u_positive).getShape().getNumberOfRows() << std::endl;*/
+            /*temp_temp = grad_W2.slice(pair->getCenterWord() - INDEX_ORIGINATES_AT_VALUE, DIMENSIONS{grad_W2.getShape().getNumberOfRows(), 1, NULL, NULL}, AXIS_ROWS);
+            for (int i = 0; i < temp_temp.getShape().getN(); i++)
+            {
+                std::cout<< temp_temp[i] << ", ";                
+            }
+            std::cout<< std::endl;*/
             /*
              * 2. Loop through and update for each negative word  and repeat the above mentioned process for each negative context 
              */            
