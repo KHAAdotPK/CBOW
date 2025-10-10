@@ -28,9 +28,9 @@ The backward propagation function computes the gradients of the weights based on
 - Backward propagation is now fully implemented and computes the gradients for both `W1` and `W2`.
 - The gradients are calculated using the outer product and dot product operations, which follow the neural network's backpropagation algorithm.
 
-### Full Softmax (Negative Sampling Implementation Pending)
+### Full Softmax and Negative Sampling Implementation
 
-This implementation currently uses the full softmax for calculating output probabilities. While full softmax is effective, it can be computationally expensive for large vocabularies. Negative Sampling is a common technique used to optimize training in word embeddings, significantly reducing computational complexity.
+This implementation currently uses the full softmax for calculating output probabilities. While full softmax is effective, it can be computationally expensive for large vocabularies. Negative Sampling is a common technique used to optimize training in word embeddings, significantly reducing computational complexity and this implementation supports both.
 
 ~~**Negative Sampling is currently under development**, and a comprehensive document detailing the approach and design is being created. You can follow the progress and access the document at [https://github.com/KHAAdotPK/CBOW/blob/main/DOCUMENTS/NegativeSampling.md](https://github.com/KHAAdotPK/CBOW/blob/main/DOCUMENTS/NegativeSampling.md). The document is mostly complete and outlines the core ideas and code strategies that will soon be implemented in this CBOW model to enhance training efficiency, especially for large-scale vocabularies.~~
 
@@ -54,8 +54,8 @@ Robust error handling has been incorporated to catch and report issues such as m
     
 ### Next Steps
 The next steps in this project include:
-- Currently, the implementation does not include **Negative Sampling**. This technique is commonly used in word embedding models to improve training efficiency by sampling negative examples during the training process. Implementing Negative Sampling will be essential to enhance the performance of the model.
-- Integrating optimization algorithms such as Stochastic Gradient Descent (SGD).
+- ~~Currently, the implementation does not include **Negative Sampling**. This technique is commonly used in word embedding models to improve training efficiency by sampling negative examples during the training process. Implementing Negative Sampling will be essential to enhance the performance of the model.~~
+- ~~Integrating optimization algorithms such as Stochastic Gradient Descent (SGD).~~
 - Expanding the codebase to handle larger datasets efficiently.
 - Performing extensive testing and validation to ensure correctness and performance.
 
@@ -145,6 +145,15 @@ This section lists the available command line options for the software, along wi
 
 - **`rs`, `--rs`**  
   Sets the regularization strength, used to prevent overfitting.
+
+- **`--w2-t`, `--w2-transpose`, `--w2-swap-axes`, `--w2-axis-flip`, `--reshape-w2`, `--w2_row_to_col`, `--w2-flip`**  
+  Transposes W2 weight matrix.
+
+- **`--ns`, `ns`, `--negative-samples`**  
+  Number of negative samples from corpus/vocabulary; set to 0 if not using this option.
+
+- **`average`, `--average`, `--average-of-w1-w2-t`**  
+  Creates a new file which has average of two embeddings.
 
 ---
 
